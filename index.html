@@ -1,0 +1,2606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kinfolks</title>
+<!-- Full-screen "real app" behavior when added to home screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kinfolks">
+<meta name="theme-color" content="#0a0a0a">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg:#0a0a0a; --card:#141414; --card2:#1e1e1e;
+    --green:#e6b324; --green2:#b8860b; --red:#d72631; --red2:#a01620;
+    --text:#f2f2f2; --muted:#8a8a8a; --line:#2a2a2a; --gold:#f0c947;
+  }
+  body.light {
+    --bg:#f4f2ee; --card:#ffffff; --card2:#f0ece4;
+    --green:#c79a1e; --green2:#a8780f; --red:#c41f2a; --red2:#9a1620;
+    --text:#1a1a1a; --muted:#6b6b6b; --line:#e0dcd2; --gold:#c79a1e;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; padding:16px; max-width:720px; margin:0 auto; padding-bottom:80px; }
+  header { text-align:center; padding:22px 0 12px; }
+  .applogo { width:84px; height:84px; margin:0 auto 8px; display:block; border-radius:22px; box-shadow:0 6px 20px rgba(0,0,0,.5); }
+  .logo { font-size:36px; font-weight:900; letter-spacing:-1px; background:linear-gradient(120deg,var(--green),var(--red)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .flag-stripe { display:flex; height:6px; border-radius:999px; overflow:hidden; margin:4px auto 14px; max-width:220px; }
+  .flag-stripe span { flex:1; } .flag-red{background:#d72631;} .flag-black{background:#000;} .flag-green{background:#e6b324;}
+  .tag { color:var(--muted); font-size:13px; margin-top:2px; letter-spacing:.5px; }
+
+  .ribbon { font-size:12px; text-align:center; padding:8px 12px; border-radius:10px; margin-bottom:14px; border:1px solid var(--line); }
+  .ribbon.demo { background:rgba(212,175,55,.1); color:var(--gold); border-color:rgba(212,175,55,.3); }
+  .ribbon.live { background:rgba(240,201,71,.1); color:var(--green); border-color:rgba(240,201,71,.3); }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.18); }
+  .refund-note { background:rgba(240,201,71,.1); border:1px solid rgba(240,201,71,.3); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; color:#e8d9a8; line-height:1.5; }
+  .set-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .set-label { font-weight:600; font-size:15px; }
+  .seg { display:inline-flex; background:var(--card2); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .seg-btn { background:transparent; color:var(--muted); border:none; padding:7px 12px; font-size:13px; font-weight:600; cursor:pointer; }
+  .seg-btn.on { background:var(--gold); color:#000; }
+  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+
+  .event-bar { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .event-pill { flex-shrink:0; padding:8px 14px; border-radius:999px; font-size:14px; font-weight:600; background:var(--card2); border:1px solid var(--line); color:var(--muted); cursor:pointer; white-space:nowrap; }
+  .event-pill.active { background:var(--green); color:#000; border-color:var(--green); }
+  .event-pill.add { color:var(--green); border-style:dashed; }
+
+  /* event cover photo */
+  .cover { position:relative; height:200px; border-radius:18px; overflow:hidden; margin-bottom:8px; display:flex; align-items:flex-end;
+           background-size:cover; background-position:center; background-color:#1e1e1e;
+           background-image:linear-gradient(135deg,#e6b324,#0d0d0d 60%,#d72631); box-shadow:0 4px 16px rgba(0,0,0,.3); }
+  .cover-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.05) 55%,rgba(0,0,0,.2)); }
+  .cover-title { position:relative; z-index:2; font-size:27px; font-weight:900; color:#fff; padding:16px 18px; text-shadow:0 2px 10px rgba(0,0,0,.7); line-height:1.08; letter-spacing:-0.5px; }
+  .cover-actions { position:absolute; top:10px; right:10px; z-index:3; }
+  .cover-btn { background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.25); padding:6px 10px; font-size:12px; border-radius:999px; backdrop-filter:blur(4px); }
+  .preset-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:8px; }
+  .preset { height:48px; border-radius:10px; cursor:pointer; border:2px solid transparent; }
+  .preset.sel { border-color:var(--green); }
+
+  .host-row { display:flex; align-items:center; gap:10px; padding:12px; background:var(--card2); border-radius:12px; margin-bottom:14px; }
+  .host-av { width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#000; background:linear-gradient(135deg,var(--gold),var(--red)); }
+  .host-info { flex:1; min-width:0; }
+  .host-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+  .host-name { font-weight:700; }
+
+  .deadline-row { display:flex; align-items:center; gap:10px; padding:12px; border-radius:12px; margin-bottom:14px; border:1px solid var(--line); }
+  .deadline-row.ok { background:rgba(240,201,71,.08); } .deadline-row.warn { background:rgba(212,175,55,.1); } .deadline-row.late { background:rgba(226,59,59,.12); }
+  .when-card { display:flex; align-items:center; gap:12px; background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:14px; }
+  .when-ico { font-size:24px; line-height:1; }
+  .when-info { flex:1; }
+  .when-date { font-weight:700; font-size:15.5px; color:var(--text); }
+  .when-loc { font-size:13px; color:var(--muted); margin-top:2px; }
+  .dl-ico { font-size:22px; } .dl-info{flex:1;} .dl-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);} .dl-date{font-weight:700;}
+
+  .goal-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .raised { font-size:30px; font-weight:800; color:var(--green); }
+  .goal { font-size:14px; color:var(--muted); }
+  .bar { height:14px; background:var(--card2); border-radius:999px; overflow:hidden; margin:10px 0 6px; }
+  .fill { height:100%; width:0%; background:linear-gradient(90deg,var(--green),var(--gold)); border-radius:999px; transition:width .5s ease; }
+  .pct { font-size:13px; color:var(--muted); text-align:right; }
+
+  .config-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+  select, input { width:100%; background:var(--card2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:10px; font-size:15px; }
+  input:disabled { opacity:.55; }
+  .share-box { margin-top:14px; padding:14px; background:var(--card2); border-radius:12px; text-align:center; }
+  .share-amt { font-size:26px; font-weight:800; color:var(--gold); }
+  .share-lbl { font-size:12px; color:var(--muted); }
+  .headcount { font-size:12px; color:var(--muted); margin-top:8px; text-align:center; }
+  .plusone { background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .plusone-top { display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:14.5px; }
+  .stepper { display:flex; align-items:center; gap:14px; }
+  .stepper button { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--text); font-size:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+  .stepper button:active { transform:scale(.9); }
+  .stepper span { min-width:20px; text-align:center; font-weight:800; font-size:17px; }
+
+  .member { display:flex; align-items:center; gap:12px; padding:12px; background:var(--card2); border-radius:12px; margin-bottom:10px; }
+  .avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#000; background:linear-gradient(135deg,var(--green),var(--red)); overflow:hidden; }
+  .m-info { flex:1; min-width:0; }
+  .m-name { font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .m-status { font-size:12px; }
+  .paid { color:var(--green); } .partial { color:var(--gold); } .unpaid { color:var(--muted); } .opted-out{color:var(--muted);font-style:italic;}
+  .m-amt { text-align:right; font-weight:700; white-space:nowrap; }
+  .msg-btn { background:var(--card2); border:1px solid var(--line); border-radius:50%; width:38px; height:38px; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; transition:transform .12s; }
+  .msg-btn:active { transform:scale(.88); }
+  .msg-alert { display:flex; align-items:center; gap:10px; background:linear-gradient(120deg,var(--gold),var(--red)); color:#000; border-radius:14px; padding:13px 16px; margin-bottom:14px; cursor:pointer; font-weight:700; box-shadow:0 4px 14px rgba(215,38,49,.3); animation:msgPulse 2s ease-in-out infinite; }
+  .msg-alert-ico { font-size:20px; }
+  .msg-alert-go { margin-left:auto; font-size:13px; opacity:.85; }
+  .biz-card { padding:16px; }
+  .biz-head { display:flex; align-items:center; gap:12px; }
+  .biz-name { font-weight:800; font-size:17px; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .biz-owner { font-size:12.5px; color:var(--muted); margin-top:1px; }
+  .biz-desc { font-size:14px; color:#d8d8d8; line-height:1.5; margin-top:10px; }
+  body.light .biz-desc { color:#444; }
+  .biz-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .biz-link { text-decoration:none; background:var(--card2); border:1px solid var(--line); color:var(--gold); font-weight:600; font-size:13px; padding:7px 13px; border-radius:999px; }
+  .biz-link:active { transform:scale(.95); }
+  .biz-music { margin-top:12px; }
+  .biz-music-label { font-size:12px; font-weight:700; color:var(--gold); margin-bottom:6px; }
+  .music-embed { width:100%; border:none; border-radius:12px; overflow:hidden; display:block; background:var(--card2); }
+  @keyframes msgPulse { 0%,100%{ box-shadow:0 4px 14px rgba(215,38,49,.3);} 50%{ box-shadow:0 4px 22px rgba(215,38,49,.55);} }
+  .role-tag { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:2px 7px; border-radius:999px; }
+  .role-admin{background:rgba(226,59,59,.2);color:var(--red);} .role-super{background:rgba(212,175,55,.2);color:var(--gold);} .role-member{background:var(--card);color:var(--muted);}
+  .in-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(240,201,71,.18);color:var(--green);}
+  .evadmin-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:linear-gradient(120deg,var(--gold),var(--red));color:#000;}
+  .out-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--card);color:var(--muted);}
+
+  button { cursor:pointer; border:none; border-radius:10px; font-size:15px; font-weight:600; padding:11px 16px; background:var(--green); color:#000; transition:opacity .2s; }
+  button:hover { opacity:.88; } button:disabled { opacity:.4; cursor:not-allowed; }
+  button.secondary { background:var(--card2); color:var(--text); border:1px solid var(--line); }
+  button.red { background:var(--red); color:#fff; }
+  button.sm { padding:7px 12px; font-size:13px; }
+  .full { width:100%; } .row { display:flex; gap:10px; } .row>* { flex:1; }
+
+  .pool-btn { display:block; width:100%; text-align:center; text-decoration:none; background:linear-gradient(120deg,var(--green),var(--green2)); color:#000; font-weight:700; padding:14px; border-radius:12px; margin-top:4px; }
+  .pool-set { font-size:12px; color:var(--muted); margin-top:8px; text-align:center; }
+
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; width:100%; max-width:420px; max-height:90vh; overflow-y:auto; }
+  .modal h3 { margin-bottom:14px; }
+  .field { margin-bottom:12px; }
+  .err { color:var(--red); font-size:13px; margin-top:8px; min-height:18px; }
+  .ok { color:var(--green); font-size:13px; margin-top:8px; min-height:18px; }
+
+  .vault-locked { text-align:center; padding:10px 0; }
+  .vault-amt { font-size:30px; font-weight:800; }
+  .lock-ico { font-size:28px; }
+  .ledger-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .ledger-item:last-child { border:none; }
+  .out { color:var(--red); } .in { color:var(--green); }
+  .hint { font-size:12px; color:var(--muted); margin-top:8px; }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:var(--card2); color:var(--muted); }
+  .linkbtn { background:none; border:none; color:var(--red); font-size:12px; padding:0; font-weight:600; cursor:pointer; }
+  .roster-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .roster-item:last-child { border:none; }
+  .roster-name { flex:1; font-weight:600; }
+  .roster-select { width:auto; padding:6px 8px; font-size:13px; }
+  .perm-note { font-size:11px; color:var(--muted); text-align:center; margin-top:6px; }
+
+  /* suggestions */
+  .filter-row { display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+  .filter-row .chip { flex-shrink:0; }
+  .chip { padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600; background:var(--card2); border:1px solid var(--line); color:var(--muted); cursor:pointer; }
+  .chip.on { background:var(--green); color:#000; border-color:var(--green); }
+  .sug { padding:12px; background:var(--card2); border-radius:12px; margin-bottom:10px; }
+  .sug-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .sug-name { font-weight:700; }
+  .bo-tag { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; background:linear-gradient(120deg,var(--gold),var(--red)); color:#000; }
+  .sug-meta { font-size:12px; color:var(--muted); }
+  .sug-rating { font-size:13px; color:var(--gold); margin:2px 0 2px; letter-spacing:1px; }
+  .sug-rnum { font-size:11px; color:var(--muted); letter-spacing:0; }
+  .sug-pager { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; }
+  .pg-btn { background:var(--card2); color:var(--text); border:1px solid var(--line); padding:8px 14px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; }
+  .pg-btn:disabled { opacity:.35; cursor:not-allowed; }
+  .pg-info { font-size:12px; color:var(--muted); text-align:center; flex:1; }
+  .map-btn { display:inline-flex; align-items:center; gap:4px; text-decoration:none; background:var(--card); color:var(--green); border:1px solid var(--green); padding:7px 14px; border-radius:10px; font-size:13px; font-weight:600; }
+  .pbadge { display:inline-block; font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--card2); border:1px solid var(--line); color:#cfcfcf; margin-right:4px; }
+
+  /* messaging */
+  .msg-tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .msg-thread { max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px; margin-bottom:12px; }
+  .msg { max-width:80%; padding:8px 12px; border-radius:14px; font-size:14px; }
+  .msg.mine { align-self:flex-end; background:var(--green); color:#000; border-bottom-right-radius:4px; }
+  .msg.theirs { align-self:flex-start; background:var(--card2); border-bottom-left-radius:4px; }
+  .msg-who { font-size:10px; color:var(--muted); margin-bottom:2px; }
+  .msg-empty { text-align:center; color:var(--muted); font-size:13px; padding:20px; }
+  .compose { display:flex; gap:8px; }
+  .compose input { flex:1; }
+  footer { text-align:center; color:var(--muted); font-size:12px; padding:16px 0; }
+  .login-wrap { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+  /* bottom tab bar */
+  .tabpanel { display:none; }
+  .tabpanel.active { display:block; }
+  .tabbar { position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; align-items:flex-end; justify-content:space-around;
+            background:rgba(15,15,15,.96); backdrop-filter:blur(12px); border-top:1px solid var(--line);
+            padding:8px 24px calc(8px + env(safe-area-inset-bottom)); max-width:720px; margin:0 auto; }
+  body.light .tabbar { background:rgba(255,255,255,.96); }
+  .tabbtn { flex:0 0 auto; background:none; border:none; color:var(--muted); padding:6px 10px; border-radius:12px;
+            display:flex; flex-direction:column; align-items:center; gap:3px; font-size:11px; font-weight:600; cursor:pointer; position:relative; transition:transform .12s; }
+  .tabbtn:active { transform:scale(.9); }
+  .tabbtn .ti { width:26px; height:26px; fill:#6b6b6b; transition:fill .2s, transform .15s; }
+  .tabbtn.on .ti { fill:url(#navgrad); transform:translateY(-1px); }
+  .tabbtn.on { color:var(--gold); }
+  .tabbtn .dot { width:6px; height:6px; border-radius:50%; background:var(--red); position:absolute; top:2px; right:50%; margin-right:-16px; display:none; }
+  .tabbtn.has-badge .dot { display:block; }
+  /* center Home — sized to line up with the other tab icons */
+  .home-tab { transform:none; }
+  .hold-hint { position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:12px; line-height:1; color:var(--gold); opacity:.6; letter-spacing:1px; pointer-events:none; }
+  .home-orb { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+              background:linear-gradient(135deg,var(--gold),var(--red)); box-shadow:0 3px 10px rgba(215,38,49,.4); transition:transform .15s, box-shadow .2s; }
+  .home-orb .ti { width:19px; height:19px; fill:#fff !important; transform:none !important; }
+  .home-tab .home-lbl { font-size:11px; color:var(--gold); font-weight:600; margin-top:3px; }
+  .home-tab:not(.on) .home-lbl { color:var(--muted); }
+  .home-tab:not(.on) .home-orb { opacity:.9; }
+  .home-tab:active .home-orb { transform:scale(.88); box-shadow:0 2px 6px rgba(215,38,49,.5); }
+  /* pop-up extra tabs — floating arch, no panel background */
+  .extras-backdrop { position:fixed; inset:0; z-index:44; background:transparent; display:none; }
+  .extras-backdrop.show { display:block; }
+  .tab-extras { position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:45;
+                display:none; align-items:flex-end; justify-content:center; gap:12px; pointer-events:none; }
+  .tab-extras.show { display:flex; }
+  .extra-btn { background:transparent; border:none; color:var(--text); padding:6px 8px; min-width:64px; pointer-events:auto;
+               display:flex; flex-direction:column; align-items:center; gap:5px; font-size:11.5px; font-weight:700; cursor:pointer; position:relative;
+               opacity:0; transform:translateY(26px) scale(.8); transition:transform .12s;
+               text-shadow:0 1px 6px rgba(0,0,0,.6); }
+  body.light .extra-btn { text-shadow:0 1px 4px rgba(255,255,255,.7); }
+  /* the icon sits in a floating gradient orb; the rest is transparent */
+  .extra-btn .ti { width:30px; height:30px; fill:#fff; padding:11px; border-radius:50%;
+                   background:linear-gradient(135deg,var(--gold),var(--red)); box-shadow:0 6px 16px rgba(215,38,49,.4); box-sizing:content-box; }
+  /* 4-button arch: outer pair low, inner pair high */
+  .tab-extras.show .extra-btn { animation:archOuter .36s cubic-bezier(.2,1.35,.45,1) forwards; }
+  .tab-extras.show .extra-btn:nth-child(1){ animation-delay:0s;   animation-name:archOuter; }
+  .tab-extras.show .extra-btn:nth-child(2){ animation-delay:.05s; animation-name:archInner; }
+  .tab-extras.show .extra-btn:nth-child(3){ animation-delay:.1s;  animation-name:archInner; }
+  .tab-extras.show .extra-btn:nth-child(4){ animation-delay:.15s; animation-name:archOuter; }
+  .extra-btn:active { transform:scale(.9) !important; }
+  .extra-btn:active .ti { box-shadow:0 3px 8px rgba(215,38,49,.5); }
+  .extra-btn .dot { width:8px; height:8px; border-radius:50%; background:var(--red); position:absolute; top:2px; right:14px; display:none; border:2px solid var(--bg); }
+  .extra-btn.has-badge .dot { display:block; }
+  /* outer buttons land lower, inner buttons ride higher → arch curve */
+  @keyframes archOuter { from{ opacity:0; transform:translateY(30px) scale(.78);} to{ opacity:1; transform:translateY(22px) scale(1);} }
+  @keyframes archInner { from{ opacity:0; transform:translateY(30px) scale(.78);} to{ opacity:1; transform:translateY(-14px) scale(1);} }
+  body.app-open { padding-bottom:88px; }
+
+  /* event list cards (Home) */
+  .ev-card { display:flex; gap:0; flex-direction:column; background:var(--card2); border:1px solid var(--line); border-radius:18px; overflow:hidden; margin-bottom:14px; cursor:pointer; transition:border-color .2s, transform .1s, box-shadow .2s; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .ev-card:active { transform:scale(.985); }
+  .ev-card.mine { border-color:rgba(240,201,71,.5); box-shadow:0 2px 8px rgba(0,0,0,.25), 0 0 0 1px rgba(240,201,71,.25); }
+  .ev-cover { height:124px; background-size:cover; background-position:center; position:relative; display:flex; align-items:flex-end; }
+  .ev-cover-ov { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,.1) 65%,transparent); }
+  .ev-cover-name { position:relative; z-index:2; color:#fff; font-weight:800; font-size:19px; padding:10px 14px; text-shadow:0 1px 6px rgba(0,0,0,.7); letter-spacing:-0.3px; }
+  .ev-date-chip { position:absolute; top:10px; left:10px; z-index:2; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); color:#fff; font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.2); }
+  .ev-body { padding:12px 14px; }
+  .ev-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .ev-host { font-size:12px; color:var(--muted); }
+  .ev-mini-bar { height:6px; background:var(--card); border-radius:999px; overflow:hidden; margin-top:8px; }
+  .ev-mini-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--gold)); }
+  .ev-status { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .st-in { background:rgba(240,201,71,.18); color:var(--green); }
+  .st-out { background:var(--card); color:var(--muted); }
+  .st-due { background:rgba(212,175,55,.18); color:var(--gold); }
+  .desc-box { font-size:14px; color:#cfcfcf; background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:14px; line-height:1.5; white-space:pre-wrap; }
+  .ev-desc { font-size:12px; color:var(--muted); margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ev-due { font-size:11px; color:var(--muted); }
+  .ev-due.warn { color:var(--gold); } .ev-due.late { color:var(--red); }
+  .list-sub { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:4px 0 10px; }
+  .back-btn { background:none; border:none; color:var(--green); font-size:15px; font-weight:600; padding:4px 0 12px; cursor:pointer; }
+  .about-row { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .about-row .applogo { width:52px; height:52px; margin:0; box-shadow:none; }
+  .auth-tabs { display:flex; gap:6px; margin-bottom:16px; background:var(--card2); padding:4px; border-radius:12px; }
+  .auth-tab { flex:1; background:none; border:none; color:var(--muted); padding:9px; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer; }
+  .auth-tab.on { background:var(--green); color:#000; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="welcomeScreen" class="login-wrap">
+  <div id="logoWelcome"></div>
+  <div class="logo">KINFOLKS</div>
+  <div class="flag-stripe"><span class="flag-red"></span><span class="flag-black"></span><span class="flag-green"></span></div>
+  <div class="card" style="width:100%; max-width:400px; margin-top:18px; text-align:center;">
+    <h2 style="justify-content:center;">Welcome to Kinfolks</h2>
+    <p style="font-size:15px;color:#e8e8e8;line-height:1.6;margin:10px 0 8px;">Your group's home for planning trips, dinners, and nights out — whatever the family's into.</p>
+    <p style="font-size:14px;color:#cfcfcf;line-height:1.6;margin:0 0 8px;">Everything lives in one spot. See who's in, who's paid, and what's coming up — no confusion.</p>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 16px;">Browse ideas. Start an event. Split the cost evenly. Keep everyone on the same page.</p>
+    <button class="full" onclick="goToLogin()">Get Started →</button>
+    <button class="secondary full" style="margin-top:10px;" onclick="open_('installModal')">📲 How to add this to your phone</button>
+    <div class="hint" style="margin-top:12px;">© 2026 Kinfolks · <button class="linkbtn" style="color:var(--muted)" onclick="open_('termsModal')">Terms</button></div>
+  </div>
+</div>
+
+<div id="loginScreen" class="login-wrap" style="display:none;">
+  <div id="logoLogin"></div>
+  <div class="logo">KINFOLKS</div>
+  <div class="flag-stripe"><span class="flag-red"></span><span class="flag-black"></span><span class="flag-green"></span></div>
+  <div class="card" style="width:100%; max-width:380px; margin-top:18px;">
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tabSignin" onclick="setAuthMode('signin')">Sign In</button>
+      <button class="auth-tab" id="tabSignup" onclick="setAuthMode('signup')">Create Account</button>
+    </div>
+
+    <!-- SIGN IN -->
+    <div id="signinForm">
+      <div class="field"><label>Username</label><input id="siUser" placeholder="your username" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="siPass" type="password" placeholder="your password" autocomplete="current-password"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);margin:2px 0 10px;cursor:pointer;">
+        <input type="checkbox" id="rememberMe" style="width:auto;" checked> Keep me signed in
+      </label>
+      <div class="err" id="loginMsg"></div>
+      <button class="full" onclick="doSignin()">Sign In</button>
+      <div style="text-align:center;margin-top:10px;"><button class="linkbtn" style="color:var(--muted)" onclick="openForgot()">Forgot password?</button></div>
+    </div>
+
+    <!-- SIGN UP -->
+    <div id="signupForm" style="display:none;">
+      <div class="field"><label>Display Name</label><input id="suName" placeholder="e.g. Marcus"></div>
+      <div class="field"><label>Pick a Username</label><input id="suUser" placeholder="e.g. marcus_w" autocomplete="username"></div>
+      <div class="field"><label>Create a Password</label><input id="suPass" type="password" placeholder="at least 6 characters" autocomplete="new-password"></div>
+      <div class="field"><label>Phone Number <span class="hint" style="display:inline">(optional)</span></label><input id="suPhone" type="tel" inputmode="tel" placeholder="e.g. 312-555-0199" autocomplete="tel"></div>
+      <div class="field"><label>Email <span class="hint" style="display:inline">(optional)</span></label><input id="suEmail" type="email" inputmode="email" placeholder="e.g. you@email.com" autocomplete="email"></div>
+      <div class="hint" style="margin-top:-4px;margin-bottom:4px;">Add at least one so we can reach you about events.</div>
+      <div class="hint" style="margin-top:-4px;margin-bottom:8px;">🔒 Your number/email stays private — never shown to other people in the app.</div>
+      <div class="field"><label>Who referred you? (name of someone already in)</label><input id="suRef" placeholder="e.g. Marcus invited me"></div>
+      <div class="field"><label>Group Access Code</label><input id="suCode" type="password" placeholder="Ask the organizer" autocomplete="off"></div>
+      <div style="background:var(--card2);border-radius:12px;padding:12px;margin:4px 0 8px;">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">🔑 Security question <span class="hint" style="display:inline;font-weight:400;">(so you can reset your own password later)</span></div>
+        <div class="field" style="margin-bottom:8px;"><select id="suSecQ">
+          <option value="">— pick a question —</option>
+          <option>What was your first pet's name?</option>
+          <option>What street did you grow up on?</option>
+          <option>What's your mother's maiden name?</option>
+          <option>What was the name of your first school?</option>
+          <option>What's your favorite food?</option>
+          <option>What city were you born in?</option>
+          <option>What was your childhood nickname?</option>
+        </select></div>
+        <div class="field" style="margin-bottom:0;"><input id="suSecA" placeholder="Your answer" autocomplete="off"></div>
+      </div>
+      <div class="err" id="signupMsg"></div>
+      <button class="full" onclick="doSignup()">Request to Join</button>
+    </div>
+
+    <div class="hint" style="text-align:center;margin-top:12px;">Demo: code <strong>kinfolks</strong> · username <strong>artez</strong> is admin</div>
+    <div class="hint" style="text-align:center;margin-top:8px;">© 2026 Kinfolks · <button class="linkbtn" style="color:var(--muted)" onclick="open_('termsModal')">Terms &amp; Conditions</button></div>
+  </div>
+</div>
+
+<!-- WAITING FOR APPROVAL -->
+<div id="waitScreen" class="login-wrap" style="display:none;">
+  <div id="logoWait"></div>
+  <div class="logo">KINFOLKS</div>
+  <div class="flag-stripe"><span class="flag-red"></span><span class="flag-black"></span><span class="flag-green"></span></div>
+  <div class="card" style="width:100%; max-width:380px; margin-top:18px; text-align:center;">
+    <div style="font-size:40px;margin-bottom:8px;">⏳</div>
+    <h2 style="justify-content:center;">Request Sent</h2>
+    <p style="font-size:14px;color:#cfcfcf;margin:8px 0 14px;">Your request to join Kinfolks is waiting for an admin to approve it. You'll be able to sign in once you're approved.</p>
+    <div class="hint" id="waitName" style="margin-bottom:14px;"></div>
+    <button class="secondary full" onclick="checkApproval()">Check if I'm approved</button>
+    <button class="linkbtn" style="color:var(--muted);margin-top:12px;" onclick="backToLogin()">Back to sign in</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" style="display:none;">
+  <header>
+    <div id="logoMain"></div>
+    <div class="logo">KINFOLKS</div>
+    <div class="flag-stripe"><span class="flag-red"></span><span class="flag-black"></span><span class="flag-green"></span></div>
+    <div class="tag">GROUP FUND · TRIPS & EVENTS</div>
+  </header>
+
+  <div id="ribbon" class="ribbon demo"></div>
+
+  <!-- ===== HOME TAB ===== -->
+  <div class="tabpanel active" id="tab-home">
+
+  <!-- LIST VIEW: all events -->
+  <div id="homeList">
+    <div id="msgAlert" class="msg-alert" style="display:none;" onclick="showTab('chat')">
+      <span class="msg-alert-ico">💬</span>
+      <span id="msgAlertText">You have new messages</span>
+      <span class="msg-alert-go">Open ›</span>
+    </div>
+    <div class="card">
+      <h2>All Events <span class="badge" id="whoami"></span></h2>
+      <div id="eventCards"></div>
+      <button class="full" id="newEventBtn" onclick="openNew()" style="margin-top:6px;">＋ New Event</button>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW: one event (hidden until tapped) -->
+  <div id="eventDetail" style="display:none;">
+  <button class="back-btn" onclick="backToList()">‹ All Events</button>
+  <div class="card">
+    <div class="cover" id="cover">
+      <div class="cover-overlay"></div>
+      <div class="cover-title" id="eventTitle">Event</div>
+      <div class="cover-actions">
+        <button class="cover-btn" id="coverBtn" onclick="openCover()">📷 Cover</button>
+      </div>
+    </div>
+    <div style="text-align:right;margin:-4px 0 8px;"><button class="linkbtn" id="renameBtn" onclick="renameEvent()">rename event</button></div>
+
+    <div id="descBox" class="desc-box"></div>
+    <div id="privacyBadges" style="margin-bottom:12px;"></div>
+
+    <div class="when-card" id="whenCard" style="display:none;">
+      <div class="when-ico">🗓️</div>
+      <div class="when-info">
+        <div class="when-date" id="whenDate">—</div>
+        <div class="when-loc" id="whenLoc"></div>
+      </div>
+      <button class="secondary sm" id="whenEditBtn" style="flex:none;" onclick="editWhen()">Edit</button>
+    </div>
+
+    <div class="host-row">
+      <div class="host-av" id="hostAv">?</div>
+      <div class="host-info"><div class="host-label">Hosted by</div><div class="host-name" id="hostName">—</div></div>
+      <button class="secondary sm" id="hostBtn" style="flex:none;" onclick="changeHost()">Change</button>
+    </div>
+
+    <div class="deadline-row ok" id="deadlineRow">
+      <div class="dl-ico" id="dlIco">📅</div>
+      <div class="dl-info"><div class="dl-label">Money due by</div><div class="dl-date" id="dlDate">No deadline set</div></div>
+      <button class="secondary sm" id="dlBtn" style="flex:none;" onclick="setDeadline()">Set</button>
+    </div>
+    <button class="secondary full sm" id="calBtn" onclick="addToCalendar()" style="margin-bottom:14px;">＋ Add deadline to my calendar</button>
+
+    <div class="goal-row">
+      <span class="raised">$<span id="raised">0</span></span>
+      <span class="goal">of $<span id="goal">0</span> goal</span>
+    </div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="pct"><span id="pct">0</span>% funded · <span id="remaining">$0</span> to go</div>
+  </div>
+
+  <div class="card">
+    <h2>Cost Settings <span class="badge" id="costLock"></span></h2>
+    <div class="config-grid">
+      <div><label>Total Cost ($)</label><input id="optCost" type="number" inputmode="decimal" placeholder="0.00"></div>
+      <div><label>Split Among</label><input id="optPeople" type="number" inputmode="numeric" placeholder="1" disabled></div>
+    </div>
+    <div class="share-box">
+      <div class="share-amt">$<span id="perPerson">0.00</span></div>
+      <div class="share-lbl">per person · everyone who's IN</div>
+    </div>
+    <div class="headcount" id="headcount"></div>
+    <div class="perm-note" id="costNote"></div>
+  </div>
+
+  <!-- OPT IN/OUT -->
+  <div class="card">
+    <h2>Your Spot</h2>
+    <div id="myOptBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>Send Your Payment</h2>
+    <a id="poolLink" class="pool-btn" href="#" target="_blank" rel="noopener">Pay →</a>
+    <div class="pool-set" id="poolSet"></div>
+    <div class="hint">Real money flows through PayPal or Venmo (the host sets which). This page tracks who's paid. <button class="linkbtn" style="color:var(--green)" onclick="open_('moneyModal')">How payments work</button></div>
+    <div class="refund-note" id="refundNote"></div>
+  </div>
+  </div><!-- /eventDetail -->
+
+  </div><!-- /tab-home -->
+
+  <!-- ===== MY EVENTS TAB ===== -->
+  <div class="tabpanel" id="tab-events">
+    <div class="card">
+      <h2>My Events <span class="badge">you're in</span></h2>
+      <div id="myEventCards"></div>
+    </div>
+  </div><!-- /tab-events -->
+
+  <!-- ===== MONEY TAB ===== -->
+  <div class="tabpanel" id="tab-money">
+  <div class="card">
+    <h2>Who's In & Who's Paid</h2>
+    <div id="memberList"></div>
+    <button class="full secondary" onclick="openPay()">+ Mark My Payment</button>
+  </div>
+
+  <div class="card">
+    <h2>Group Vault <span class="badge">🔒 passcode protected</span></h2>
+    <div class="vault-locked">
+      <div class="lock-ico">🔒</div>
+      <div class="vault-amt">$<span id="vaultBalance">0</span></div>
+      <div class="hint">A running tally of what's been collected and spent for this event. <button class="linkbtn" style="color:var(--gold)" onclick="open_('vaultInfoModal')">What's this?</button></div>
+      <div class="row" style="margin-top:14px;">
+        <button class="secondary" onclick="openAdd()">Log Money In</button>
+        <button class="red" id="spendBtn" onclick="openSpend()">Log Spend (Passcode)</button>
+      </div>
+      <div class="perm-note" id="vaultNote"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Activity</h2>
+    <div id="ledger"><div class="hint">No activity yet.</div></div>
+  </div>
+  </div><!-- /tab-money -->
+
+  <!-- ===== CHAT TAB ===== -->
+  <div class="tabpanel" id="tab-chat">
+  <!-- MESSAGING -->
+  <div class="card">
+    <h2>Messages</h2>
+    <div class="msg-tabs">
+      <select id="msgTarget" onchange="renderMessages()"></select>
+    </div>
+    <div class="msg-thread" id="msgThread"></div>
+    <div class="compose">
+      <input id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()" style="flex:none;">Send</button>
+    </div>
+    <div class="hint" id="msgNote"></div>
+  </div>
+  </div><!-- /tab-chat -->
+
+  <!-- ===== IDEAS TAB ===== -->
+  <div class="tabpanel" id="tab-ideas">
+
+  <!-- SUGGESTIONS -->
+  <div class="card">
+    <h2>Next Event Ideas</h2>
+    <input id="sugSearch" placeholder="🔎 Search spots (e.g. pizza, jazz, Bronzeville)" oninput="sugSearchInput()" style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:11px 14px;border-radius:12px;font-size:15px;margin-bottom:12px;">
+    <div class="filter-row">
+      <div class="chip on" data-f="all" onclick="setFilter('all')">All</div>
+      <div class="chip" data-f="blackowned" onclick="setFilter('blackowned')">Black-Owned ✊🏾</div>
+      <div class="chip" data-f="restaurant" onclick="setFilter('restaurant')">🍽️ Restaurants</div>
+      <div class="chip" data-f="bar" onclick="setFilter('bar')">🍸 Bars & Lounges</div>
+      <div class="chip" data-f="bowling" onclick="setFilter('bowling')">🎳 Bowling</div>
+      <div class="chip" data-f="movie" onclick="setFilter('movie')">🎬 Movies</div>
+      <div class="chip" data-f="skating" onclick="setFilter('skating')">⛸️ Skating</div>
+      <div class="chip" data-f="pickleball" onclick="setFilter('pickleball')">🏓 Pickleball</div>
+      <div class="chip" data-f="basketball" onclick="setFilter('basketball')">🏀 Indoor Sports</div>
+      <div class="chip" data-f="parks" onclick="setFilter('parks')">🌳 Parks & Picnics</div>
+      <div class="chip" data-f="outdoor" onclick="setFilter('outdoor')">⚽ Outdoor Sports</div>
+      <div class="chip" data-f="activity" onclick="setFilter('activity')">🎟️ Other Activities</div>
+    </div>
+    <div id="sugList"></div>
+    <div id="sugPager" class="sug-pager"></div>
+    <div class="hint">Curated Chicago & Illinois spots — Black-owned highlighted in gold, plus general picks. Search or tap a category, then "Map · check hours" to confirm a place is open before you plan around it. These are current as of the latest update, but hours and openings change — always verify on the map.</div>
+  </div>
+  </div><!-- /tab-ideas -->
+
+  <!-- ===== BUSINESS SPOTLIGHT TAB ===== -->
+  <div class="tabpanel" id="tab-biz">
+    <div class="card">
+      <h2>Family Business Spotlight 💼</h2>
+      <div class="hint" style="margin-top:0;margin-bottom:12px;">Support the family's hustles. Add your business or brand so everyone can find and share it.</div>
+      <button class="full" onclick="openMyBiz()">＋ Add / Edit my business</button>
+    </div>
+    <div id="bizList"></div>
+  </div><!-- /tab-biz -->
+
+  <!-- ===== ADMIN/PROFILE TAB ===== -->
+  <div class="tabpanel" id="tab-admin">
+
+  <!-- MY PROFILE (photo) -->
+  <div class="card">
+    <h2>My Profile</h2>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="avatar" id="myAvatar" style="width:64px;height:64px;font-size:22px;"></div>
+      <div style="flex:1;">
+        <div id="myProfileName" style="font-weight:700;font-size:16px;margin-bottom:2px;">—</div>
+        <div class="hint" style="margin:0;">Add a profile picture so the family knows it's you. Optional.</div>
+      </div>
+    </div>
+    <input type="file" id="picFile" accept="image/*" style="display:none;" onchange="onPicChosen(event)">
+    <div class="row" style="margin-top:12px;">
+      <button class="secondary sm" onclick="document.getElementById('picFile').click()">📷 Choose photo</button>
+      <button class="secondary sm" id="removePicBtn" onclick="removeMyPic()" style="display:none;">Remove</button>
+    </div>
+  </div>
+
+  <!-- MY FAMILY (personal, private to this user) -->
+  <div class="card">
+    <h2>My Family <span class="badge">🔒 private to you</span></h2>
+    <div class="hint" style="margin-top:0;margin-bottom:12px;">Your own private circle. Add the people you plan with most. Only you see this list, and you can make events just for this circle.</div>
+    <div id="myFamilyList"></div>
+    <div class="row" style="margin-top:6px;">
+      <button class="secondary sm" onclick="openAddFamily('type')">+ Add new person</button>
+      <button class="secondary sm" onclick="openAddFamily('pick')">+ Add from members</button>
+    </div>
+  </div>
+
+  <!-- PEOPLE & ROLES -->
+  <div class="card" id="pendingCard" style="display:none;">
+    <h2>Pending Requests <span class="badge" id="pendingCount" style="background:var(--red);color:#fff;"></span></h2>
+    <div id="pendingList"></div>
+    <div class="perm-note">People asking to join. Approve only people you or the family know.</div>
+  </div>
+
+  <div class="card" id="rosterCard">
+    <h2>People & Roles <button class="linkbtn" id="addPersonBtn" style="color:var(--green)" onclick="openAddPerson()">+ add</button></h2>
+    <div id="roster"></div>
+    <div class="perm-note" id="rosterNote"></div>
+  </div>
+
+  <!-- PUBLIC TOGGLE -->
+  <div class="card" id="settingsCard">
+    <h2>Event Access</h2>
+    <div id="accessBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>Settings</h2>
+
+    <div class="set-row">
+      <div><div class="set-label">Appearance</div><div class="hint" style="margin:0;">Switch between dark and light.</div></div>
+      <div class="seg" id="themeSeg">
+        <button class="seg-btn" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</button>
+        <button class="seg-btn" data-theme="light" onclick="setTheme('light')">☀️ Light</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div><div class="set-label">Profile picture</div><div class="hint" style="margin:0;">Change or remove your photo.</div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="secondary sm" onclick="document.getElementById('picFile').click()">Change</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div><div class="set-label">Password</div><div class="hint" style="margin:0;">Change your sign-in password.</div></div>
+      <button class="secondary sm" onclick="openChangePass()">Change</button>
+    </div>
+
+    <div class="set-row">
+      <div><div class="set-label">Notifications</div><div class="hint" style="margin:0;">Text &amp; email alerts are coming soon.</div></div>
+      <span class="hint" style="margin:0;">Coming soon</span>
+    </div>
+
+    <div class="set-row" style="border:none;">
+      <div><div class="set-label" style="color:var(--red);">Delete my account</div><div class="hint" style="margin:0;">Remove yourself from Kinfolks for good.</div></div>
+      <button class="sm" style="background:var(--red);color:#fff;" onclick="confirmDeleteAccount()">Delete</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>About & Legal</h2>
+    <div class="about-row">
+      <div id="logoAbout"></div>
+      <div>
+        <div style="font-weight:800;font-size:16px;">KINFOLKS</div>
+        <div class="hint" style="margin-top:2px;">Group fund &amp; events platform</div>
+      </div>
+    </div>
+    <div class="hint" style="margin:10px 0;">Created &amp; owned by <strong>Demetria Williams</strong>. © 2026 Demetria Williams. All rights reserved.</div>
+    <button class="secondary full" onclick="open_('termsModal')">View Terms &amp; Conditions</button>
+  </div>
+
+  <footer>Kinfolks · <button class="linkbtn" style="color:var(--muted)" onclick="logout()">sign out</button></footer>
+  </div><!-- /tab-admin -->
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <!-- expandable extra tabs (revealed by press-and-hold on Home) -->
+  <div class="tab-extras" id="tabExtras">
+    <button class="extra-btn" id="nav-chat" onclick="showTab('chat');hideExtras()"><span class="dot"></span>
+      <svg class="ti" viewBox="0 0 24 24"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H8l-4 4V5a1 1 0 0 1 1-1z"/></svg>Chat</button>
+    <button class="extra-btn" id="nav-ideas" onclick="showTab('ideas');hideExtras()">
+      <svg class="ti" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 4 12.7c-.6.4-1 1.1-1 1.8v.5H9v-.5c0-.7-.4-1.4-1-1.8A7 7 0 0 1 12 2zM9 19h6v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>Ideas</button>
+    <button class="extra-btn" id="nav-biz" onclick="showTab('biz');hideExtras()">
+      <svg class="ti" viewBox="0 0 24 24"><path d="M10 2h4a2 2 0 0 1 2 2v2h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3V4a2 2 0 0 1 2-2zm0 4h4V4h-4zM3 13h7v-2h4v2h7v-3H3z"/></svg>Business</button>
+    <button class="extra-btn" id="nav-admin" onclick="showTab('admin');hideExtras()"><span class="dot"></span>
+      <svg class="ti" viewBox="0 0 24 24"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-8 1.5c-2.6 0-5 1.3-5 3.4V19h7v-2.1c0-1 .3-1.9.9-2.7-.9-.4-1.9-.7-2.9-.7zm8 0c-1 0-2 .3-2.9.7.6.8.9 1.7.9 2.7V19h7v-3.1c0-2.1-2.4-3.4-5-3.4z"/></svg>Family</button>
+  </div>
+  <div class="extras-backdrop" id="extrasBackdrop" onclick="hideExtras()"></div>
+
+  <nav class="tabbar">
+    <button class="tabbtn" id="nav-events" onclick="showTab('events')">
+      <svg class="ti" viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm12 7v10H5V9zm-9 2H7v3h3z"/></svg>My Events</button>
+
+    <button class="tabbtn home-tab on" id="nav-home" onclick="showTab('home')">
+      <span class="hold-hint">⋯</span>
+      <span class="home-orb"><svg class="ti" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span>
+      <span class="home-lbl">Home</span></button>
+
+    <button class="tabbtn" id="nav-money" onclick="showTab('money')">
+      <svg class="ti" viewBox="0 0 24 24"><path d="M12 2v2.2c2.3.3 4 1.6 4 3.5 0 .6-.5 1-1 1s-1-.4-1-1c0-.7-.8-1.3-2-1.5v3.8c2.4.4 4 1.7 4 3.8 0 2-1.7 3.4-4 3.7V22h-2v-2.2c-2.5-.3-4.2-1.7-4.2-3.8 0-.6.5-1 1-1s1 .4 1 1c0 .8.9 1.5 2.2 1.7v-3.9C9.6 13.1 8 11.8 8 9.7 8 7.8 9.7 6.5 12 6.2V4z"/></svg>Money</button>
+  </nav>
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <linearGradient id="navgrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e6b324"/><stop offset="100%" stop-color="#d72631"/>
+    </linearGradient>
+  </defs></svg>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="installModal"><div class="modal">
+  <h3>📲 Add Kinfolks to Your Phone</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:12px;">Get the Kinfolks icon on your home screen so it opens like a real app — no app store needed.</div>
+  <div style="background:var(--card2);border-radius:12px;padding:14px;margin-bottom:12px;">
+    <div style="font-weight:700;margin-bottom:6px;"> iPhone (Safari)</div>
+    <div style="font-size:14px;color:#cfcfcf;line-height:1.7;">1. Tap the <strong>Share</strong> button (the square with an arrow ↑) at the bottom.<br>2. Scroll down and tap <strong>Add to Home Screen</strong>.<br>3. Tap <strong>Add</strong> in the top corner. Done!</div>
+  </div>
+  <div style="background:var(--card2);border-radius:12px;padding:14px;">
+    <div style="font-weight:700;margin-bottom:6px;"> Android (Chrome)</div>
+    <div style="font-size:14px;color:#cfcfcf;line-height:1.7;">1. Tap the <strong>menu</strong> (three dots ⋮) in the top corner.<br>2. Tap <strong>Add to Home screen</strong>.<br>3. Tap <strong>Add</strong>. Done!</div>
+  </div>
+  <button class="full" style="margin-top:14px;" onclick="close_('installModal')">Got it</button>
+</div></div>
+
+<div class="overlay" id="moneyModal"><div class="modal">
+  <h3>About Payments</h3>
+  <div style="font-size:14px;color:#cfcfcf;line-height:1.6;">
+    <p style="margin-bottom:10px;"><strong>Kinfolks does not hold, collect, move, or take any money.</strong></p>
+    <p style="margin-bottom:10px;">We are a planning and management hub — an app to keep your trips, dinners, nights out, and events organized in one place. That's it.</p>
+    <p style="margin-bottom:10px;">All actual money goes through the <strong>PayPal or Venmo set up by the host of each event</strong>. Those services have their own terms. The host of the event is fully in charge of their PayPal/Venmo and the group funds collected there.</p>
+    <p style="margin-bottom:10px;">Kinfolks takes no cut, no fees, and has no access to anyone's funds. Always make sure you're sending to the right person before you pay.</p>
+    <p style="margin-bottom:0;"><strong>Refunds:</strong> If someone opts out, getting money back is between them and the host — the app can't refund anyone. The general rule: opt out <strong>before the due date</strong> and you can ask the host for a full refund; after that, the money may already be spent, so refunds aren't guaranteed. The "Request Refund" button just messages the host; they send it back through Venmo/PayPal.</p>
+  </div>
+  <button class="full" style="margin-top:14px;" onclick="close_('moneyModal')">Understood</button>
+</div></div>
+
+<div class="overlay" id="paySetupModal"><div class="modal">
+  <h3>Set Up Payment</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:12px;">Pick how the host wants to get paid, then paste their link or username. Money goes straight to the host — Kinfolks never touches it.</div>
+  <div class="field"><label>Method</label>
+    <select id="psType" onchange="psUpdateHelper()">
+      <option value="paypal">PayPal</option>
+      <option value="venmo">Venmo</option>
+    </select>
+  </div>
+  <div class="field">
+    <label id="psHandleLabel">PayPal.Me name (the part after paypal.me/)</label>
+    <input id="psHandle" placeholder="e.g. alexwilliams">
+  </div>
+  <div id="psHelper" style="background:var(--card2);border-radius:10px;padding:12px;font-size:13px;color:#cfcfcf;line-height:1.6;"></div>
+  <div id="psDeadlineNote" style="margin-top:10px;"></div>
+  <button class="secondary full" style="margin-top:10px;" onclick="open_('payGuideModal')">📖 Full step-by-step setup guide</button>
+  <div class="err" id="psMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('paySetupModal')">Cancel</button><button onclick="savePaySetup()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="vaultInfoModal"><div class="modal">
+  <h3>About the Vault & Passcode</h3>
+  <div style="font-size:14px;color:#cfcfcf;line-height:1.65;">
+    <p style="margin-bottom:10px;">The Vault is just a <strong>scoreboard</strong> — a running tally of money collected and spent for this event. It does <strong>not</strong> hold any real money.</p>
+    <p style="margin-bottom:10px;">The <strong>passcode is only for logging spending</strong> — so not just anyone can type in "spent $40 on gas." It keeps the record accurate. <strong>It has nothing to do with withdrawing money</strong>, because there's no money in the app to withdraw.</p>
+    <p style="margin-bottom:10px;"><strong>Where the real money is:</strong> everyone pays the host directly through the host's Venmo/PayPal. That money sits in the <strong>host's own account</strong> — it's already theirs. The host spends it on the event (cabin, gas, food) straight from their account. No withdrawal, no code, no app involvement with the actual cash.</p>
+    <p style="margin-bottom:0;">Think of it like a group spreadsheet: it tracks who paid and what got spent, while the host holds and spends the real money.</p>
+  </div>
+  <button class="full" style="margin-top:14px;" onclick="close_('vaultInfoModal')">Got it</button>
+</div></div>
+
+<div class="overlay" id="forgotModal"><div class="modal">
+  <h3>Reset Your Password</h3>
+  <div id="forgotStep1">
+    <div class="hint" style="margin-top:0;margin-bottom:10px;">Enter your username and we'll ask your security question.</div>
+    <div class="field"><input id="fpUser" placeholder="your username" autocomplete="username"></div>
+    <div class="err" id="fpMsg1"></div>
+    <div class="row" style="margin-top:12px;"><button class="secondary" onclick="close_('forgotModal')">Cancel</button><button onclick="forgotFindUser()">Next</button></div>
+  </div>
+  <div id="forgotStep2" style="display:none;">
+    <div class="field"><label id="fpQuestion">Your security question</label><input id="fpAnswer" placeholder="Your answer" autocomplete="off"></div>
+    <div class="field"><label>New password</label><input id="fpNew" type="password" placeholder="at least 6 characters"></div>
+    <div class="field"><label>Confirm new password</label><input id="fpConfirm" type="password" placeholder="re-enter it"></div>
+    <div class="err" id="fpMsg2"></div>
+    <div class="row" style="margin-top:12px;"><button class="secondary" onclick="close_('forgotModal')">Cancel</button><button onclick="forgotReset()">Reset Password</button></div>
+  </div>
+  <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:12px;">
+    <div class="hint" style="margin:0;">Can't remember your answer? Message the organizer and they can reset it for you.</div>
+  </div>
+</div></div>
+
+<div class="overlay" id="bizModal"><div class="modal">
+  <h3>My Business / Brand</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:10px;">Show off what you do. Leave any field blank to skip it.</div>
+  <div class="field"><label>Business name</label><input id="bizName" placeholder="e.g. Noava"></div>
+  <div class="field"><label>What is it? (short description)</label><textarea id="bizDesc" rows="3" placeholder="e.g. Women's fashion label — handmade pieces" style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:15px;font-family:inherit;resize:vertical;"></textarea></div>
+  <div class="field"><label>Category</label>
+    <select id="bizCat">
+      <option value="">— pick one —</option>
+      <option>Fashion & Apparel</option><option>Food & Catering</option><option>Beauty & Hair</option>
+      <option>Health & Fitness</option><option>Photography & Media</option><option>Art & Design</option>
+      <option>Tech & Apps</option><option>Music & Entertainment</option><option>Cleaning & Home</option>
+      <option>Auto & Detailing</option><option>Events & Planning</option><option>Retail & Resale</option>
+      <option>Professional Services</option><option>Other</option>
+    </select>
+  </div>
+  <div class="field"><label>Website / shop link</label><input id="bizSite" type="url" inputmode="url" placeholder="https://..."></div>
+  <div class="field"><label>Instagram <span class="hint" style="display:inline">(@handle or link)</span></label><input id="bizIG" placeholder="@yourbrand"></div>
+  <div class="field"><label>Other link <span class="hint" style="display:inline">(TikTok, Cash App, booking, etc.)</span></label><input id="bizOther" placeholder="https://..."></div>
+  <div class="field"><label>🎵 Music link <span class="hint" style="display:inline">(Spotify or Apple Music — song, album, artist, or playlist)</span></label><input id="bizMusic" type="url" inputmode="url" placeholder="paste your Spotify or Apple Music link"></div>
+  <div class="err" id="bizMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="removeMyBiz()" id="bizRemoveBtn" style="display:none;">Remove</button><button class="secondary" onclick="close_('bizModal')">Cancel</button><button onclick="saveMyBiz()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="changePassModal"><div class="modal">
+  <h3>Change Password</h3>
+  <div class="field"><label>Current password</label><input id="cpCurrent" type="password" placeholder="your current password" autocomplete="current-password"></div>
+  <div class="field"><label>New password</label><input id="cpNew" type="password" placeholder="at least 6 characters" autocomplete="new-password"></div>
+  <div class="field"><label>Confirm new password</label><input id="cpConfirm" type="password" placeholder="type it again" autocomplete="new-password"></div>
+  <div class="err" id="cpMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('changePassModal')">Cancel</button><button onclick="saveNewPass()">Update Password</button></div>
+</div></div>
+
+<div class="overlay" id="whenModal"><div class="modal">
+  <h3>Event Date & Place</h3>
+  <div class="config-grid">
+    <div class="field"><label>Event Date</label><input id="whenEditDate" type="date"></div>
+    <div class="field"><label>Event Time</label><input id="whenEditTime" type="time"></div>
+  </div>
+  <div class="field"><label>Location / Address</label><input id="whenEditLoc" placeholder="e.g. Lake Geneva, WI"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('whenModal')">Cancel</button><button onclick="saveWhen()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="payGuideModal"><div class="modal">
+  <h3>How to Collect Money as the Host</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:12px;">Quick note: PayPal and Venmo don't have a "pool." You just share <strong>your own link or username</strong> — everyone sends to it, and it all lands in your account. Here's how to set yours up.</div>
+
+  <div style="background:var(--card2);border-radius:12px;padding:14px;margin-bottom:12px;">
+    <div style="font-weight:800;font-size:15px;margin-bottom:8px;color:var(--gold);">💙 PayPal (PayPal.Me link)</div>
+    <div style="font-size:13.5px;color:#d8d8d8;line-height:1.7;">
+      1. Open the <strong>PayPal app</strong> (or paypal.com) and sign in — or make a free account.<br>
+      2. Tap your <strong>profile picture</strong>, then look for <strong>"PayPal.Me"</strong> (or go to paypal.com/paypalme).<br>
+      3. Pick your link name — like <strong>paypal.me/alexwilliams</strong>. This is the part you'll paste into Kinfolks.<br>
+      4. Back in Kinfolks, choose <strong>PayPal</strong> and type just the name after the slash (e.g. <strong>alexwilliams</strong>).<br>
+      5. Done! When people tap "Pay" they'll go to your link, type the amount, and send it to you.
+    </div>
+  </div>
+
+  <div style="background:var(--card2);border-radius:12px;padding:14px;margin-bottom:12px;">
+    <div style="font-weight:800;font-size:15px;margin-bottom:8px;color:var(--gold);">🟦 Venmo (your username)</div>
+    <div style="font-size:13.5px;color:#d8d8d8;line-height:1.7;">
+      1. Open the <strong>Venmo app</strong> and sign in — or make a free account.<br>
+      2. Tap the <strong>menu</strong> (☰) or your profile to find your <strong>username</strong> — it starts with an <strong>@</strong> (like <strong>@Alex-Williams-7</strong>).<br>
+      3. In Kinfolks, choose <strong>Venmo</strong> and type your username <strong>without the @</strong> (e.g. <strong>Alex-Williams-7</strong>).<br>
+      4. Done! "Pay" sends people to your Venmo so they can send their share.<br>
+      <span style="color:var(--muted);">Tip: In Venmo settings you can set payments to "Private" so the whole world doesn't see them.</span>
+    </div>
+  </div>
+
+  <div style="background:rgba(240,201,71,.1);border:1px solid rgba(240,201,71,.3);border-radius:12px;padding:12px;margin-bottom:6px;">
+    <div style="font-size:13px;color:#e8d9a8;line-height:1.6;">
+      <strong>A few host tips:</strong><br>
+      • Tell people exactly what to put in the note (like "Cabin trip - your name").<br>
+      • Set the event's "Money Due By" date and match it when you remind people.<br>
+      • The money goes to <strong>you</strong> — you're in charge of it, including any refunds. Kinfolks just tracks who's paid.
+    </div>
+  </div>
+
+  <button class="full" style="margin-top:12px;" onclick="close_('payGuideModal')">Got it</button>
+</div></div>
+
+<div class="overlay" id="familyModal"><div class="modal">
+  <h3 id="familyModalTitle">Add to My Family</h3>
+  <div id="familyTypeBox" style="display:none;">
+    <div class="field"><label>Name</label><input id="familyName" placeholder="e.g. Mom, Cousin Dee"></div>
+  </div>
+  <div id="familyPickBox" style="display:none;">
+    <label>Pick a member</label>
+    <div id="familyPickList" style="max-height:260px;overflow-y:auto;margin-top:6px;"></div>
+  </div>
+  <div class="err" id="familyMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('familyModal')">Cancel</button><button id="familyAddBtn" onclick="submitFamily()">Add</button></div>
+</div></div>
+
+<div class="overlay" id="descModal"><div class="modal">
+  <h3>Edit "What's Included"</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:10px;">Break down everything covered so the group knows what they're paying for.</div>
+  <textarea id="descEdit" rows="7" placeholder="• Cabin rental&#10;• Gas&#10;• Dinner&#10;• Activities" style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:15px;font-family:inherit;resize:vertical;line-height:1.5;"></textarea>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('descModal')">Cancel</button><button onclick="saveDesc()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="termsModal"><div class="modal" style="max-width:480px;">
+  <h3>Terms &amp; Conditions</h3>
+  <div style="font-size:13px;color:#cfcfcf;line-height:1.6;max-height:60vh;overflow-y:auto;padding-right:6px;">
+    <p style="margin-bottom:10px;"><strong>Kinfolks</strong> — Group Fund &amp; Events Application<br>
+    <span class="hint">Effective 2026 · © 2026 Demetria Williams. All rights reserved.</span></p>
+
+    <p style="margin-bottom:10px;"><strong>1. Ownership.</strong> This application, including its name "Kinfolks," its design, layout, features, concept, source code, and all related materials (the "App"), is the original work of and is owned exclusively by <strong>Demetria Williams</strong> ("Owner"). All rights not expressly granted are reserved.</p>
+
+    <p style="margin-bottom:10px;"><strong>2. No Copying or Redistribution.</strong> No part of the App may be copied, reproduced, modified, reverse-engineered, repackaged, sold, sublicensed, or distributed, in whole or in part, without the prior written permission of the Owner. The concept and implementation are the intellectual property of the Owner and may not be used to create a competing or derivative product.</p>
+
+    <p style="margin-bottom:10px;"><strong>3. Personal &amp; Group Use Only.</strong> The App is provided for personal, non-commercial use by members of the Owner's group and invited participants. Access is granted at the Owner's discretion and may be revoked at any time.</p>
+
+    <p style="margin-bottom:10px;"><strong>4. Payments &amp; Money.</strong> The App is an organizing and tracking tool only. It does not hold, transfer, or process funds. All actual payments occur through third-party services (such as PayPal or Venmo), which are governed by their own terms. The Owner is not responsible for any disputes, losses, fees, or errors arising from those services or from payments between users. Members are solely responsible for their own contributions and transactions.</p>
+
+    <p style="margin-bottom:10px;"><strong>5. No Warranty.</strong> The App is provided "as is," without warranty of any kind. The Owner is not liable for any damages, losses, or issues arising from its use.</p>
+
+    <p style="margin-bottom:10px;"><strong>6. Roles &amp; Conduct.</strong> Administrators and supervisors manage events and access. Members agree to use the App honestly and not to misuse, tamper with, or attempt unauthorized access to any part of it.</p>
+
+    <p style="margin-bottom:10px;"><strong>7. Changes.</strong> The Owner may update these Terms at any time. Continued use of the App constitutes acceptance of the current Terms.</p>
+
+    <p style="margin-bottom:4px;"><strong>8. Contact.</strong> For permissions or questions regarding ownership, contact the Owner.</p>
+
+    <p class="hint" style="margin-top:12px;">This document asserts authorship and ownership and sets the rules of use. It is not a substitute for formal legal registration (e.g., copyright or trademark) or professional legal advice.</p>
+  </div>
+  <button class="full" style="margin-top:14px;" onclick="close_('termsModal')">Close</button>
+</div></div>
+
+<div class="overlay" id="payModal"><div class="modal">
+  <h3>Mark Your Payment</h3>
+  <div class="field"><label>Your Name</label><input id="payName" placeholder="e.g. Marcus"></div>
+  <div class="field"><label>Amount</label><input id="payAmt" type="number" inputmode="decimal" placeholder="0.00"></div>
+  <div class="field"><label>How did you pay?</label>
+    <select id="payMethod">
+      <option value="Venmo">Venmo</option>
+      <option value="PayPal">PayPal</option>
+      <option value="Cash">Cash</option>
+      <option value="Zelle">Zelle</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+  <div class="hint">Your fair share is $<span id="payHint">0.00</span>. Mark all or part once you've sent it. Noting how you paid keeps everyone clear.</div>
+  <div class="ok" id="payMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('payModal')">Cancel</button><button onclick="submitPay()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="addModal"><div class="modal">
+  <h3>Log Money Into Vault</h3>
+  <div class="field"><label>From</label><input id="addName" placeholder="Your name"></div>
+  <div class="field"><label>Amount</label><input id="addAmt" type="number" inputmode="decimal" placeholder="0.00"></div>
+  <div class="ok" id="addMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('addModal')">Cancel</button><button onclick="submitAdd()">Log</button></div>
+</div></div>
+
+<div class="overlay" id="spendModal"><div class="modal">
+  <h3>Log Spend From Vault</h3>
+  <div class="field"><label>What for</label><input id="spendWhat" placeholder="e.g. Cabin deposit"></div>
+  <div class="field"><label>Amount</label><input id="spendAmt" type="number" inputmode="decimal" placeholder="0.00"></div>
+  <div class="field"><label>Group Passcode</label><input id="spendCode" type="password" placeholder="Required" autocomplete="off"></div>
+  <div class="err" id="spendMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('spendModal')">Cancel</button><button class="red" onclick="submitSpend()">Authorize</button></div>
+  <div class="hint" style="text-align:center;margin-top:12px;">Demo passcode: <strong>kinfolks2025</strong></div>
+</div></div>
+
+<div class="overlay" id="newModal"><div class="modal">
+  <h3>New Event</h3>
+  <div class="field"><label>Event Name</label><input id="newName" placeholder="e.g. Vegas Weekend"></div>
+  <div class="field"><label>What's included? (full breakdown)</label><textarea id="newDesc" rows="5" placeholder="List everything that's part of this event so the group knows what they're paying for. Example:&#10;• Cabin rental (2 nights)&#10;• Gas for the SUVs&#10;• Saturday dinner reservation&#10;• Group activity / excursion&#10;Total covers all of the above, split evenly." style="width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:15px;font-family:inherit;resize:vertical;line-height:1.5;"></textarea></div>
+  <div class="field"><label>Who's Hosting / In Charge</label><input id="newHost" placeholder="e.g. Marcus"></div>
+  <div class="config-grid">
+    <div class="field"><label>Event Date</label><input id="newEventDate" type="date"></div>
+    <div class="field"><label>Event Time</label><input id="newEventTime" type="time"></div>
+  </div>
+  <div class="field"><label>Location / Address <span class="hint" style="display:inline">(optional)</span></label><input id="newLocation" placeholder="e.g. Lake Geneva, WI"></div>
+  <div class="config-grid">
+    <div class="field"><label>Total Cost ($)</label><input id="newCost" type="number" inputmode="decimal" placeholder="0.00"></div>
+    <div class="field"><label>Money Due By</label><input id="newDeadline" type="date"></div>
+  </div>
+  <div class="err" id="newMsg"></div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);margin-top:4px;cursor:pointer;">
+    <input type="checkbox" id="newFamilyOnly" style="width:auto;"> Private to my family circle only
+  </label>
+  <div class="hint" style="margin-top:4px;margin-bottom:10px;">When on, only you and people in your "My Family" list will see this event.</div>
+
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);cursor:pointer;">
+    <input type="checkbox" id="newHideRoster" style="width:auto;" checked> Hide the people list until someone joins
+  </label>
+  <div class="hint" style="margin-top:4px;margin-bottom:10px;">Everyone can see the event & details, but who's in and who's paid stays hidden until they're in.</div>
+
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);cursor:pointer;">
+    <input type="checkbox" id="newInviteOnly" style="width:auto;"> Invite-only (host approves who joins)
+  </label>
+  <div class="hint" style="margin-top:4px;">When on, people request to join and you approve them. They can't join on their own.</div>
+
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);cursor:pointer;margin-top:10px;">
+    <input type="checkbox" id="newChargeGuests" style="width:auto;"> Charge members for their plus-ones
+  </label>
+  <div class="hint" style="margin-top:4px;">When on, each guest someone brings adds a share to what that person pays. When off, plus-ones only count toward the headcount (good for free hangouts).</div>
+
+  <div style="background:rgba(240,201,71,.08);border:1px solid rgba(240,201,71,.25);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12.5px;color:#e8d9a8;line-height:1.5;">⭐ <strong>Event admins:</strong> You're automatically the admin of events you create. Once people join, tap any name in the "Who's In" list to <strong>make them an event admin</strong> (or remove them) so they can help manage this event.</div>
+
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('newModal')">Cancel</button><button onclick="submitNew()">Create</button></div>
+</div></div>
+
+<div class="overlay" id="coverModal"><div class="modal">
+  <h3>Event Cover Photo</h3>
+  <div class="hint" style="margin-top:0;margin-bottom:12px;">Upload from your phone, paste an image link, or pick a preset.</div>
+  <button class="full" onclick="document.getElementById('coverFile').click()">📷 Upload Photo</button>
+  <input type="file" id="coverFile" accept="image/*" style="display:none" onchange="handleCoverFile(event)">
+  <div class="field" style="margin-top:14px;"><label>Or paste an image URL</label><input id="coverUrl" placeholder="https://..."></div>
+  <label style="margin-bottom:8px;">Or pick a preset</label>
+  <div class="preset-row" id="presetRow"></div>
+  <div class="err" id="coverMsg"></div>
+  <div class="row" style="margin-top:14px;">
+    <button class="secondary" onclick="removeCover()">Remove</button>
+    <button class="secondary" onclick="close_('coverModal')">Cancel</button>
+    <button onclick="saveCoverUrl()">Save</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="personModal"><div class="modal">
+  <h3>Add Person</h3>
+  <div class="field"><label>Name</label><input id="personName" placeholder="e.g. Aunt Renee"></div>
+  <div class="field"><label>Role</label>
+    <select id="personRole">
+      <option value="member">Member — pays & marks own payment</option>
+      <option value="supervisor">Supervisor — manage events & verify</option>
+      <option value="admin">Admin — full control</option>
+    </select>
+  </div>
+  <div class="err" id="personMsg"></div>
+  <div class="row" style="margin-top:14px;"><button class="secondary" onclick="close_('personModal')">Cancel</button><button onclick="submitPerson()">Add</button></div>
+</div></div>
+
+<script>
+const CONFIG = {
+  SUPABASE_URL:"https://oygzhrfhleyegqjkmwth.supabase.co", SUPABASE_ANON:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95Z3pocmZobGV5ZWdxamttd3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MTMwNjgsImV4cCI6MjA5NzM4OTA2OH0.n603cbEdGadSLIQylGtoXXueBkBU2qkqptEnly5diZU",
+  ACCESS_CODE:"kinfolks", SPEND_CODE:"kinfolks2025",
+  ADMINS:["artez","alex"],
+  RESERVED:["alex","artez","admin","owner","kinfolks","support","moderator","root","staff"]
+};
+
+// Basic profanity / inappropriate-word screen for usernames & display names.
+// Catches common slurs and obscene roots, including simple letter-swaps (l33t).
+const BAD_WORD_ROOTS = ["nigg","nigr","fagg","f4g","retard","r3tard","kike","spic","chink","coon","wetback","tranny","faggot","cunt","whore","slut","rape","rapist","molest","pedo","paedo","cp","childporn","kkk","nazi","hitler","beaner","dyke","fuck","f u c k","shit","bitch","bastard","dick","cock","pussy","penis","vagina","cum","jizz","anus","porn","xxx","sex","sexy","nude","nudes","horny","69","420boobs","boob","titt","nut"];
+function normalizeForScreen(s){
+  return String(s).toLowerCase()
+    .replace(/[1!|]/g,'i').replace(/0/g,'o').replace(/3/g,'e').replace(/4/g,'a')
+    .replace(/5/g,'s').replace(/7/g,'t').replace(/@/g,'a').replace(/\$/g,'s')
+    .replace(/[^a-z]/g,'');
+}
+function isInappropriate(s){
+  const n=normalizeForScreen(s);
+  return BAD_WORD_ROOTS.some(w=>{ const wn=w.replace(/[^a-z]/g,''); return wn.length>=2 && n.includes(wn); });
+}
+function isReservedName(u){ return CONFIG.RESERVED.includes(String(u).toLowerCase()); }
+
+const LIVE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON);
+let sb=null; if(LIVE) sb=supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON);
+
+const $=id=>document.getElementById(id);
+
+// Safe storage: works on a real hosted site; silently no-ops if blocked (e.g. preview sandbox)
+const safeStore = {
+  get(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ window.localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ window.localStorage.removeItem(k); }catch(e){} }
+};
+const REMEMBER_KEY='kinfolks_remember_user';
+const money=n=>Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(n){return String(n).trim().slice(0,2).toUpperCase();}
+// returns inner HTML for an avatar: photo if the person has one, else initials
+function avatarImg(person){
+  const pic = person && person.pic;
+  if(pic){ return `<img src="${pic}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;">`; }
+  return initials(person && person.name ? person.name : '?');
+}
+function personByName(name){ return store.people.find(p=>name && p.name.toLowerCase()===String(name).toLowerCase()); }
+function avatarByName(name){ const p=personByName(name); return p?avatarImg(p):initials(name); }
+
+/* ---- Kinfolks app logo: vibrant heritage gradient (green/red/black) with clean K ---- */
+const LOGO_SVG = `<svg class="applogo" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="kf"><rect width="240" height="240" rx="54"/></clipPath>
+    <!-- vibrant diagonal blend: green -> red -> deep black -->
+    <radialGradient id="kfIg" cx="0.28" cy="1.05" r="1.25">
+      <stop offset="0" stop-color="#f0c947"/>
+      <stop offset="0.26" stop-color="#c79a1e"/>
+      <stop offset="0.5" stop-color="#d72631"/>
+      <stop offset="0.72" stop-color="#a01620"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </radialGradient>
+    <!-- soft green bloom bottom-left, red glow mid, black depth top-right -->
+    <radialGradient id="kfBloom" cx="0.22" cy="0.82" r="0.6">
+      <stop offset="0" stop-color="#ffd95e" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffd95e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="kfDark" cx="0.82" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <!-- subtle sheen on the K -->
+    <linearGradient id="kfSheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef3ee"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#kf)">
+    <rect width="240" height="240" fill="url(#kfIg)"/>
+    <rect width="240" height="240" fill="url(#kfBloom)"/>
+    <rect width="240" height="240" fill="url(#kfDark)"/>
+
+    <!-- bold classic uppercase K with a soft drop shadow -->
+    <g transform="translate(0 3)" opacity="0.32">
+      <path d="M70 54 h30 v50 l46 -50 h38 l-54 60 l56 66 h-40 l-46 -56 v56 h-30 z" fill="#000"/>
+    </g>
+    <path d="M70 52 h30 v50 l46 -50 h38 l-54 60 l56 66 h-40 l-46 -56 v56 h-30 z" fill="url(#kfSheen)"/>
+  </g></svg>`;
+$('logoLogin').innerHTML = LOGO_SVG;
+$('logoMain').innerHTML = LOGO_SVG;
+{ const la=$('logoAbout'); if(la) la.innerHTML = LOGO_SVG; }
+{ const lw=$('logoWait'); if(lw) lw.innerHTML = LOGO_SVG; }
+{ const lw=$('logoWelcome'); if(lw) lw.innerHTML = LOGO_SVG; }
+
+/* ---- SUGGESTIONS (Chicago starter list) ---- */
+const SUGGESTIONS = [
+  // ===== RESTAURANTS · Black-owned =====
+  { cat:"restaurant", name:"Virtue Restaurant & Bar", type:"restaurant", blackowned:true, rating:4.7, reviews:"2.4k", meta:"Award-winning Southern fine dining · Hyde Park" },
+  { cat:"restaurant", name:"Luella's Southern Kitchen", type:"restaurant", blackowned:true, rating:4.6, reviews:"2.1k", meta:"Lowcountry soul food · Lincoln Square" },
+  { cat:"restaurant", name:"Batter & Berries", type:"restaurant", blackowned:true, rating:4.6, reviews:"3.4k", meta:"French toast flights & brunch · Lincoln Park" },
+  { cat:"restaurant", name:"Kitchen + Kocktails", type:"restaurant", blackowned:true, rating:4.4, reviews:"2.9k", meta:"Upscale Southern comfort · River North" },
+  { cat:"restaurant", name:"Ja' Grill", type:"restaurant", blackowned:true, rating:4.5, reviews:"1.6k", meta:"Jamaican · jerk chicken & oxtail · Hyde Park" },
+  { cat:"restaurant", name:"14 Parish & Rhum Bar", type:"restaurant", blackowned:true, rating:4.5, reviews:"1.2k", meta:"Caribbean + 100s of rums · Hyde Park" },
+  { cat:"restaurant", name:"Soul & Smoke", type:"restaurant", blackowned:true, rating:4.6, reviews:"1.1k", meta:"BBQ & smoked meats · Evanston / Avondale" },
+  { cat:"restaurant", name:"Cleo's Southern Cuisine", type:"restaurant", blackowned:true, rating:4.5, reviews:"1.4k", meta:"Soul food, 3 locations · catfish & desserts" },
+  { cat:"restaurant", name:"Soul Prime", type:"restaurant", blackowned:true, rating:4.5, reviews:"680", meta:"Elevated soul food · collard green dip" },
+  { cat:"restaurant", name:"Brown Sugar Bakery", type:"restaurant", blackowned:true, rating:4.7, reviews:"1.2k", meta:"Famous cakes & sweets · Grand Crossing" },
+  { cat:"restaurant", name:"Pearl's Place", type:"restaurant", blackowned:true, rating:4.4, reviews:"1.8k", meta:"Soul food classics · chicken & waffles" },
+  { cat:"restaurant", name:"Lexington Betty Smokehouse", type:"restaurant", blackowned:true, rating:4.6, reviews:"900", meta:"Chicago-style BBQ · Pullman" },
+  { cat:"restaurant", name:"Ina Mae Tavern", type:"restaurant", blackowned:true, rating:4.5, reviews:"1.5k", meta:"New Orleans-style · Wicker Park" },
+  { cat:"restaurant", name:"Majani", type:"restaurant", blackowned:true, rating:4.5, reviews:"620", meta:"Vegan soul food · South Shore" },
+  { cat:"restaurant", name:"Bronzeville Winery", type:"restaurant", blackowned:true, rating:4.6, reviews:"740", meta:"Wine + comfort plates · Bronzeville" },
+  { cat:"restaurant", name:"Chicago's Home of Chicken & Waffles", type:"restaurant", blackowned:true, rating:4.5, reviews:"2.7k", meta:"Soul food · Bronzeville / Oak Park" },
+  { cat:"restaurant", name:"Southern Chicago", type:"restaurant", blackowned:true, rating:4.4, reviews:"310", meta:"Elevated Southern · steak & seafood · South Loop" },
+  { cat:"restaurant", name:"Gorée Cuisine", type:"restaurant", blackowned:true, rating:4.5, reviews:"540", meta:"Senegalese / West African · Kenwood" },
+  { cat:"restaurant", name:"Provare", type:"restaurant", blackowned:true, rating:4.6, reviews:"480", meta:"Creole-Italian fusion, fresh pasta · West Town" },
+  { cat:"restaurant", name:"Demera", type:"restaurant", blackowned:true, rating:4.5, reviews:"1.9k", meta:"Authentic Ethiopian, ~20 yrs · Uptown" },
+  { cat:"restaurant", name:"Frontier", type:"restaurant", blackowned:true, rating:4.5, reviews:"2.2k", meta:"New American, wild game, whole-animal · West Town" },
+  { cat:"restaurant", name:"Daisy's Po'Boy and Tavern", type:"restaurant", blackowned:true, rating:4.5, reviews:"620", meta:"New Orleans po'boys & gumbo · Hyde Park" },
+  { cat:"restaurant", name:"The Soul Food Lounge", type:"restaurant", blackowned:true, rating:4.6, reviews:"700", meta:"Soulful comfort, big portions · Beverly" },
+  { cat:"restaurant", name:"Truth Italian", type:"restaurant", blackowned:true, rating:4.5, reviews:"360", meta:"Black woman-owned Italian, elegant patio · South Side" },
+  { cat:"restaurant", name:"Sanders BBQ Supply Co.", type:"restaurant", blackowned:true, rating:4.7, reviews:"900", meta:"Acclaimed barbecue · Beverly" },
+  { cat:"restaurant", name:"Koto Hibachi", type:"restaurant", blackowned:true, rating:4.5, reviews:"410", meta:"Japanese hibachi, sleek room · Bridgeport" },
+  { cat:"restaurant", name:"Spot Bistro", type:"restaurant", blackowned:true, rating:4.4, reviews:"180", meta:"Southern breakfast & po'boys (new 2025) · Englewood" },
+  { cat:"restaurant", name:"The Staley", type:"restaurant", blackowned:true, rating:4.4, reviews:"220", meta:"Sports bar, watch Da Bears (new) · South Loop" },
+  { cat:"restaurant", name:"Lemm's Bar-B-Q", type:"restaurant", blackowned:true, rating:4.6, reviews:"540", meta:"71-yr-old BBQ legend, James Beard classic · South Side" },
+  // ===== RESTAURANTS · general =====
+  { cat:"restaurant", name:"Portillo's", type:"restaurant", blackowned:false, rating:4.5, reviews:"12k", meta:"Chicago dogs & Italian beef · multiple" },
+  { cat:"restaurant", name:"Lou Malnati's Pizzeria", type:"restaurant", blackowned:false, rating:4.6, reviews:"9k", meta:"Deep dish pizza · multiple" },
+  { cat:"restaurant", name:"Girl & the Goat", type:"restaurant", blackowned:false, rating:4.6, reviews:"7k", meta:"Upscale shared plates · West Loop" },
+  { cat:"restaurant", name:"The Purple Pig", type:"restaurant", blackowned:false, rating:4.5, reviews:"6k", meta:"Mediterranean small plates · Mag Mile" },
+  { cat:"restaurant", name:"Au Cheval", type:"restaurant", blackowned:false, rating:4.6, reviews:"5k", meta:"Legendary burger · West Loop" },
+  { cat:"restaurant", name:"The Whale Chicago", type:"restaurant", blackowned:false, rating:4.5, reviews:"1.3k", meta:"Seafood & vibes · Bucktown" },
+  { cat:"restaurant", name:"Pequod's Pizza", type:"restaurant", blackowned:false, rating:4.6, reviews:"8k", meta:"Caramelized-crust deep dish · Lincoln Park" },
+  { cat:"restaurant", name:"The Italian Village", type:"restaurant", blackowned:false, rating:4.5, reviews:"4k", meta:"Classic Italian, 3 spots · The Loop" },
+  // ===== BARS & LOUNGES · Black-owned =====
+  { cat:"bar", name:"Nobody's Darling", type:"bar", blackowned:true, rating:4.7, reviews:"680", meta:"Acclaimed cocktail bar · Andersonville" },
+  { cat:"bar", name:"Room 43", type:"bar", blackowned:true, rating:4.5, reviews:"310", meta:"Jazz & cocktails · Bronzeville" },
+  { cat:"bar", name:"Jeffery Pub", type:"bar", blackowned:true, rating:4.4, reviews:"420", meta:"Historic LGBTQ lounge · South Shore" },
+  { cat:"bar", name:"W. Hideaway Lounge", type:"bar", blackowned:true, rating:4.5, reviews:"360", meta:"Cocktails, DJs & karaoke · South Side" },
+  { cat:"bar", name:"Red Pepper's Lounge", type:"bar", blackowned:true, rating:4.4, reviews:"290", meta:"Classic Chatham cocktail lounge" },
+  { cat:"bar", name:"Duke's Cocktail Lounge", type:"bar", blackowned:true, rating:4.3, reviews:"210", meta:"Old-school South Side lounge · Chatham" },
+  { cat:"bar", name:"The Delta", type:"bar", blackowned:true, rating:4.5, reviews:"650", meta:"Tamales & craft cocktails · Wicker Park" },
+  { cat:"bar", name:"Tribe Supper Club", type:"bar", blackowned:true, rating:4.4, reviews:"480", meta:"Caribbean-fusion brunch & lounge" },
+  { cat:"bar", name:"Buddy Guy's Legends", type:"bar", blackowned:true, rating:4.6, reviews:"3.1k", meta:"Live blues + Cajun food · South Loop" },
+  // ===== BARS & LOUNGES · general =====
+  { cat:"bar", name:"Three Dots and a Dash", type:"bar", blackowned:false, rating:4.6, reviews:"3.2k", meta:"Tiki cocktails · River North" },
+  { cat:"bar", name:"The Aviary", type:"bar", blackowned:false, rating:4.6, reviews:"1.1k", meta:"High-end cocktail lounge · West Loop" },
+  { cat:"bar", name:"Cindy's Rooftop", type:"bar", blackowned:false, rating:4.5, reviews:"2.4k", meta:"Rooftop views over Millennium Park · The Loop" },
+  { cat:"bar", name:"The Berkshire Room", type:"bar", blackowned:false, rating:4.5, reviews:"900", meta:"Craft cocktails · River North" },
+  { cat:"bar", name:"Emporium Arcade Bar", type:"bar", blackowned:false, rating:4.5, reviews:"2.1k", meta:"Arcade games + drinks · Wicker Park / Logan Sq" },
+  { cat:"bar", name:"Punch Bowl Social", type:"bar", blackowned:false, rating:4.3, reviews:"3.5k", meta:"Games, karaoke & food · Fulton Market" },
+  // ===== ACTIVITIES & EVENTS · Black-owned / culture =====
+  { cat:"activity", name:"DuSable Black History Museum", type:"activity", blackowned:true, rating:4.7, reviews:"1.3k", meta:"Culture day · Washington Park" },
+  { cat:"activity", name:"Whip Lab", type:"activity", blackowned:true, rating:4.7, reviews:"260", meta:"Group cooking classes · Black-owned" },
+  { cat:"activity", name:"Bronzeville bike & history tour", type:"activity", blackowned:true, rating:4.6, reviews:"140", meta:"Guided group ride" },
+  // ===== ACTIVITIES & EVENTS · general =====
+  { cat:"activity", name:"Sky Zone Trampoline Park", type:"activity", blackowned:false, rating:4.4, reviews:"2.6k", meta:"Trampolines & dodgeball · suburbs" },
+  { cat:"activity", name:"Top Golf", type:"activity", blackowned:false, rating:4.4, reviews:"5k", meta:"Driving-range bays + food · Naperville/Schaumburg" },
+  { cat:"activity", name:"WhirlyBall", type:"activity", blackowned:false, rating:4.5, reviews:"1.2k", meta:"Bumper cars + lacrosse · Bucktown" },
+  { cat:"activity", name:"Bad Axe Throwing", type:"activity", blackowned:false, rating:4.7, reviews:"1.4k", meta:"Axe throwing + bar · West Loop" },
+  { cat:"activity", name:"Pinstripes", type:"activity", blackowned:false, rating:4.4, reviews:"2.3k", meta:"Bowling, bocce & bistro · River East" },
+  { cat:"activity", name:"Lucky Strike", type:"activity", blackowned:false, rating:4.4, reviews:"2.6k", meta:"Bowling + arcade + bar · Wrigleyville/Streeterville" },
+  { cat:"activity", name:"Spin Chicago", type:"activity", blackowned:false, rating:4.5, reviews:"800", meta:"Ping pong social club + DJ · West Loop" },
+  { cat:"activity", name:"Royal Palms Shuffleboard", type:"activity", blackowned:false, rating:4.6, reviews:"1.5k", meta:"Shuffleboard + rooftop bar · Ukrainian Village" },
+  { cat:"activity", name:"Sandbox VR", type:"activity", blackowned:false, rating:4.7, reviews:"1.1k", meta:"Full-body group VR · River North" },
+  { cat:"activity", name:"The Escape Game", type:"activity", blackowned:false, rating:4.7, reviews:"2.2k", meta:"Escape rooms · River North" },
+  { cat:"activity", name:"Chicago Riverwalk + architecture cruise", type:"activity", blackowned:false, rating:4.8, reviews:"8k", meta:"Boat tour · Downtown" },
+  { cat:"activity", name:"Lincoln Park Zoo day", type:"activity", blackowned:false, rating:4.7, reviews:"6k", meta:"Free · family-friendly" },
+  { cat:"activity", name:"Lake Geneva cabin weekend", type:"activity", blackowned:false, rating:4.7, reviews:"2k", meta:"Getaway · ~90 min from Chicago" },
+  { cat:"activity", name:"Dinner Detective murder mystery", type:"activity", blackowned:false, rating:4.5, reviews:"900", meta:"Interactive dinner show · Downtown" },
+  // ===== BOWLING ALLEYS · Chicagoland / IL =====
+  { cat:"bowling", name:"Pinstripes (River East)", type:"activity", blackowned:false, rating:4.4, reviews:"2.3k", meta:"Bowling, bocce & bistro · also Oak Brook & South Barrington" },
+  { cat:"bowling", name:"Lucky Strike (Streeterville)", type:"activity", blackowned:false, rating:4.4, reviews:"2.6k", meta:"Bowling + arcade + bar · downtown" },
+  { cat:"bowling", name:"Lucky Strike (Wrigleyville)", type:"activity", blackowned:false, rating:4.4, reviews:"1.4k", meta:"2-story lanes + Wrigley views" },
+  { cat:"bowling", name:"Seven Ten Social (Hyde Park)", type:"activity", blackowned:false, rating:4.4, reviews:"680", meta:"Boutique bowling + arcade · South Side" },
+  { cat:"bowling", name:"Timber Lanes", type:"activity", blackowned:false, rating:4.6, reviews:"540", meta:"Old-school neighborhood lanes · Lakeview" },
+  { cat:"bowling", name:"Waveland Bowl", type:"activity", blackowned:false, rating:4.3, reviews:"1.9k", meta:"40 lanes, open 24/7 · North Side" },
+  { cat:"bowling", name:"Diversey River Bowl", type:"activity", blackowned:false, rating:4.3, reviews:"1.6k", meta:"Bowling + bar, neon vibes · Avondale" },
+  { cat:"bowling", name:"10pin Bowling Lounge", type:"activity", blackowned:false, rating:4.2, reviews:"1.5k", meta:"Modern lanes downtown · River North" },
+  { cat:"bowling", name:"Stardust Bowl (Addison)", type:"activity", blackowned:false, rating:4.4, reviews:"1.3k", meta:"Big suburban alley · west suburbs" },
+  { cat:"bowling", name:"Bowlero (Lombard / Naperville / multiple)", type:"activity", blackowned:false, rating:4.2, reviews:"3k", meta:"Bowling + arcade chain · suburbs" },
+  { cat:"bowling", name:"Parkway Bowl (McHenry)", type:"activity", blackowned:false, rating:4.5, reviews:"420", meta:"Family lanes · NW suburbs" },
+  // ===== MOVIE THEATERS · Chicagoland / IL =====
+  { cat:"movie", name:"AMC River East 21", type:"activity", blackowned:false, rating:4.3, reviews:"6k", meta:"Big downtown multiplex · Streeterville" },
+  { cat:"movie", name:"Regal City North", type:"activity", blackowned:false, rating:4.2, reviews:"3.5k", meta:"Stadium seating + IMAX · Lincoln Park" },
+  { cat:"movie", name:"Music Box Theatre", type:"activity", blackowned:false, rating:4.8, reviews:"2.4k", meta:"Historic indie cinema · Lakeview" },
+  { cat:"movie", name:"The Davis Theater", type:"activity", blackowned:false, rating:4.6, reviews:"900", meta:"Restored theater + bar · Lincoln Square" },
+  { cat:"movie", name:"Logan Theatre", type:"activity", blackowned:false, rating:4.5, reviews:"1.6k", meta:"Vintage theater + bar · Logan Square" },
+  { cat:"movie", name:"AMC NEWCITY 14", type:"activity", blackowned:false, rating:4.3, reviews:"2.8k", meta:"Modern multiplex · Clybourn" },
+  { cat:"movie", name:"iPic Theaters (South Barrington)", type:"activity", blackowned:false, rating:4.4, reviews:"1.2k", meta:"Luxury recliners + dining · NW suburbs" },
+  { cat:"movie", name:"Marcus Addison Cinema", type:"activity", blackowned:false, rating:4.4, reviews:"1.7k", meta:"Recliners + UltraScreen · west suburbs" },
+  { cat:"movie", name:"Hollywood Blvd Cinema (Woodridge)", type:"activity", blackowned:false, rating:4.6, reviews:"2.1k", meta:"Dine-in movie theater · SW suburbs" },
+  { cat:"movie", name:"Cinemark at Seven Bridges (Woodridge)", type:"activity", blackowned:false, rating:4.4, reviews:"2.5k", meta:"XD big-screen multiplex · suburbs" },
+  { cat:"movie", name:"Classic Cinemas (multiple IL)", type:"activity", blackowned:false, rating:4.6, reviews:"3k", meta:"Local theater chain · Tivoli, York, more" },
+  // ===== SKATING RINKS · roller & ice · Chicagoland / IL =====
+  { cat:"skating", name:"The Rink (Chicago)", type:"activity", blackowned:true, rating:4.5, reviews:"1.1k", meta:"Roller skating, South Side institution · Chatham" },
+  { cat:"skating", name:"Rainbo Roller Rink scene / Fleetwood-style nights", type:"activity", blackowned:false, rating:4.4, reviews:"300", meta:"Throwback roller skating nights" },
+  { cat:"skating", name:"Lynwood Roller Rink", type:"activity", blackowned:false, rating:4.4, reviews:"520", meta:"Classic roller rink · south suburbs" },
+  { cat:"skating", name:"Orbit Skate Center (Palatine)", type:"activity", blackowned:false, rating:4.5, reviews:"900", meta:"Roller skating · NW suburbs" },
+  { cat:"skating", name:"Axis Lab / Millennium Park Ice Rink", type:"activity", blackowned:false, rating:4.7, reviews:"5k", meta:"Outdoor ice skating (winter) · The Loop" },
+  { cat:"skating", name:"Maggie Daley Skating Ribbon", type:"activity", blackowned:false, rating:4.7, reviews:"3.2k", meta:"Ice ribbon skate path (winter) · Downtown" },
+  { cat:"skating", name:"McFetridge Sports Center", type:"activity", blackowned:false, rating:4.4, reviews:"700", meta:"Year-round indoor ice rink · North Center" },
+  // ===== PICKLEBALL & RACQUET =====
+  { cat:"pickleball", name:"Big Shoulders Pickleball", type:"activity", blackowned:false, rating:4.6, reviews:"600", meta:"Indoor pickleball courts · West Loop" },
+  { cat:"pickleball", name:"Pickle Haus (Aurora)", type:"activity", blackowned:false, rating:4.6, reviews:"450", meta:"Indoor pickleball + bar · west suburbs" },
+  { cat:"pickleball", name:"SPF Chicago (pickleball)", type:"activity", blackowned:false, rating:4.5, reviews:"380", meta:"Indoor courts + social · Pilsen" },
+  { cat:"pickleball", name:"Lakeshore Sport & Fitness courts", type:"activity", blackowned:false, rating:4.3, reviews:"1.2k", meta:"Tennis & pickleball · Lincoln Park / Illinois Center" },
+  { cat:"pickleball", name:"Chicago Park District pickleball courts", type:"activity", blackowned:false, rating:4.4, reviews:"500", meta:"Free public courts · citywide" },
+  // ===== BASKETBALL & INDOOR SPORTS =====
+  { cat:"basketball", name:"Chicago Park District gyms (open run)", type:"activity", blackowned:false, rating:4.3, reviews:"800", meta:"Indoor hoops, pickup games · citywide" },
+  { cat:"basketball", name:"Wintrust Sports Complex (Bedford Park)", type:"activity", blackowned:false, rating:4.6, reviews:"650", meta:"Courts for hoops & volleyball · suburbs" },
+  { cat:"basketball", name:"XSET / Windy City Fieldhouse", type:"activity", blackowned:false, rating:4.4, reviews:"400", meta:"Rent courts, group sports · multiple" },
+  { cat:"basketball", name:"Lost Larson / Sport Court rentals", type:"activity", blackowned:false, rating:4.4, reviews:"300", meta:"Book a gym for a group game" },
+  { cat:"basketball", name:"Sky High / Urban Air (trampoline + courts)", type:"activity", blackowned:false, rating:4.4, reviews:"2.2k", meta:"Trampoline + dodgeball + hoops · suburbs" },
+  // ===== PARKS, PICNICS & OUTDOOR =====
+  { cat:"parks", name:"Millennium Park & The Bean", type:"activity", blackowned:false, rating:4.8, reviews:"40k", meta:"Iconic park, free events · The Loop" },
+  { cat:"parks", name:"Grant Park (picnic + festivals)", type:"activity", blackowned:false, rating:4.7, reviews:"12k", meta:"Big open lawns for picnics · Downtown" },
+  { cat:"parks", name:"Lincoln Park (lakefront)", type:"activity", blackowned:false, rating:4.8, reviews:"15k", meta:"Picnics, paths, free zoo · North Side" },
+  { cat:"parks", name:"Jackson Park & the lagoons", type:"activity", blackowned:false, rating:4.7, reviews:"4k", meta:"Historic park, picnics · South Side" },
+  { cat:"parks", name:"Washington Park", type:"activity", blackowned:false, rating:4.6, reviews:"2.5k", meta:"Wide-open green space for cookouts · South Side" },
+  { cat:"parks", name:"Promontory Point", type:"activity", blackowned:false, rating:4.8, reviews:"3.1k", meta:"Lakefront picnic spot & skyline views · Hyde Park" },
+  { cat:"parks", name:"31st Street Beach", type:"activity", blackowned:false, rating:4.6, reviews:"2k", meta:"Beach + grills + picnic areas · South Side" },
+  { cat:"parks", name:"North Avenue Beach", type:"activity", blackowned:false, rating:4.6, reviews:"9k", meta:"Beach day, volleyball, picnics · Lincoln Park" },
+  { cat:"parks", name:"Montrose Beach & Point", type:"activity", blackowned:false, rating:4.7, reviews:"6k", meta:"Beach, dog beach, picnics · Uptown" },
+  { cat:"parks", name:"Garfield Park Conservatory", type:"activity", blackowned:false, rating:4.7, reviews:"5k", meta:"Free indoor gardens + grounds · West Side" },
+  { cat:"parks", name:"Starved Rock State Park", type:"activity", blackowned:false, rating:4.8, reviews:"18k", meta:"Hiking & waterfalls day trip · ~90 min away" },
+  { cat:"parks", name:"Morton Arboretum (Lisle)", type:"activity", blackowned:false, rating:4.8, reviews:"11k", meta:"Trails, trees, picnics · west suburbs" },
+  // ===== OUTDOOR SPORTS & REC =====
+  { cat:"outdoor", name:"Maggie Daley / public mini-golf & climbing", type:"activity", blackowned:false, rating:4.6, reviews:"2.4k", meta:"Climbing wall, mini golf · Downtown" },
+  { cat:"outdoor", name:"Diversey Driving Range & Mini Golf", type:"activity", blackowned:false, rating:4.4, reviews:"1.3k", meta:"Golf + mini golf · Lincoln Park" },
+  { cat:"outdoor", name:"Sydney Marovitz (Waveland) Golf Course", type:"activity", blackowned:false, rating:4.5, reviews:"1.1k", meta:"9-hole lakefront golf · Lakeview" },
+  { cat:"outdoor", name:"Jackson Park Golf Course", type:"activity", blackowned:false, rating:4.3, reviews:"600", meta:"Public golf · South Side" },
+  { cat:"outdoor", name:"Kayak / canoe the Chicago River", type:"activity", blackowned:false, rating:4.7, reviews:"2.8k", meta:"Guided paddle tours · downtown launches" },
+  { cat:"outdoor", name:"Bike the Lakefront Trail", type:"activity", blackowned:false, rating:4.8, reviews:"5k", meta:"18-mi lakefront ride · rentals available" },
+  { cat:"outdoor", name:"Volleyball at the beach (North Ave / Oak St)", type:"activity", blackowned:false, rating:4.5, reviews:"1k", meta:"Sand courts, group games · lakefront" },
+  { cat:"outdoor", name:"Soldier Field area / open soccer fields", type:"activity", blackowned:false, rating:4.4, reviews:"700", meta:"Pickup soccer & field sports · Museum Campus" },
+];
+let sugFilter="all";
+let sugPage=1;
+let sugQuery="";
+const SUG_PER_PAGE=6;
+function setFilter(f){ sugFilter=f; sugPage=1; document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.dataset.f===f)); renderSuggestions(); }
+function sugGoPage(p){ sugPage=p; renderSuggestions(); document.getElementById('sugList').scrollIntoView({behavior:'smooth',block:'start'}); }
+function sugSearchInput(){ sugQuery=$('sugSearch').value.trim().toLowerCase(); sugPage=1; renderSuggestions(); }
+function renderSuggestions(){
+  let all = SUGGESTIONS.filter(s=> sugFilter==='all'?true : sugFilter==='blackowned'?s.blackowned : s.cat===sugFilter);
+  if(sugQuery){ all = all.filter(s=> (s.name+' '+s.meta).toLowerCase().includes(sugQuery)); }
+  const totalPages = Math.max(1, Math.ceil(all.length/SUG_PER_PAGE));
+  if(sugPage>totalPages) sugPage=totalPages;
+  const start=(sugPage-1)*SUG_PER_PAGE;
+  const items = all.slice(start, start+SUG_PER_PAGE);
+  if(!items.length){ $('sugList').innerHTML='<div class="hint" style="padding:18px;text-align:center;">No spots match your search. Try another word or tap a category.</div>'; $('sugPager').innerHTML=''; return; }
+  $('sugList').innerHTML = items.map((s,i)=>`
+    <div class="sug">
+      <div class="sug-top"><span class="sug-name">${escapeHtml(s.name)}</span>${s.blackowned?'<span class="bo-tag">Black-Owned</span>':''}</div>
+      <div class="sug-rating">${'★'.repeat(Math.round(s.rating))}<span style="color:var(--muted)">${'★'.repeat(5-Math.round(s.rating))}</span> <span class="sug-rnum">${s.rating.toFixed(1)} · ${s.reviews} reviews</span></div>
+      <div class="sug-meta">${escapeHtml(s.meta)}</div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <a class="map-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' Chicago')}" target="_blank" rel="noopener">📍 Map · check hours</a>
+        ${canManage()?`<button class="secondary sm" onclick="spinEvent('${escapeHtml(s.name).replace(/'/g,"\\'")}')">Make this an event</button>`:''}
+      </div>
+    </div>`).join('');
+  // pager
+  const pager=$('sugPager');
+  if(totalPages<=1){ pager.innerHTML=''; }
+  else {
+    pager.innerHTML = `
+      <button class="pg-btn" ${sugPage<=1?'disabled':''} onclick="sugGoPage(${sugPage-1})">‹ Prev</button>
+      <span class="pg-info">Page ${sugPage} of ${totalPages} · ${all.length} spots</span>
+      <button class="pg-btn" ${sugPage>=totalPages?'disabled':''} onclick="sugGoPage(${sugPage+1})">Next ›</button>`;
+  }
+}
+function spinEvent(name){ if(!canManage())return; openNew(); $('newName').value=name; }
+
+/* ---- EVENT COVER PHOTO ---- */
+const COVER_PRESETS = [
+  "linear-gradient(135deg,#e6b324,#0d0d0d 60%,#d72631)",
+  "linear-gradient(135deg,#d72631,#0d0d0d)",
+  "linear-gradient(135deg,#d4af37,#a01620)",
+  "linear-gradient(135deg,#b8860b,#064e3b)",
+  "linear-gradient(135deg,#1e3a8a,#0d0d0d)",
+  "linear-gradient(135deg,#7c3aed,#1e1b4b)",
+  "linear-gradient(135deg,#0d0d0d,#d72631 50%,#e6b324)",
+  "linear-gradient(160deg,#f59e0b,#7c2d12)"
+];
+let pendingCover=null; // staged choice before Save
+function openCover(){ if(!canManage())return; pendingCover=ev().cover||""; $('coverUrl').value=(ev().cover&&!ev().cover.startsWith('linear-gradient')&&!ev().cover.startsWith('data:'))?ev().cover:''; $('coverMsg').textContent=''; renderPresets(); open_('coverModal'); }
+function renderPresets(){
+  $('presetRow').innerHTML=COVER_PRESETS.map((g,i)=>
+    `<div class="preset ${pendingCover===g?'sel':''}" style="background:${g}" onclick="pickPreset(${i})"></div>`).join('');
+}
+function pickPreset(i){ pendingCover=COVER_PRESETS[i]; $('coverUrl').value=''; renderPresets(); }
+function handleCoverFile(e){
+  const file=e.target.files[0]; if(!file)return;
+  if(file.size>3*1024*1024){ $('coverMsg').textContent='Image too big (max 3MB). Try a smaller one.'; return; }
+  const reader=new FileReader();
+  reader.onload=()=>{ pendingCover=reader.result; ev().cover=pendingCover; pushEvent(); render(); close_('coverModal'); };
+  reader.readAsDataURL(file);
+}
+function saveCoverUrl(){
+  const url=$('coverUrl').value.trim();
+  if(url){ pendingCover=url; }
+  ev().cover=pendingCover||""; pushEvent(); render(); close_('coverModal');
+}
+function removeCover(){ ev().cover=""; pendingCover=""; pushEvent(); render(); close_('coverModal'); }
+
+/* ---- STORE ---- */
+let store = {
+  people:[{name:"Alex Williams", username:"alex", role:"admin", phone:"", email:"", passHash:hashPass("owner2026"), status:"approved", ref:""},
+          {name:"Artez", username:"artez", role:"admin", phone:"", email:"", passHash:hashPass("owner2026"), status:"approved", ref:""}],
+  events:[{ id:1, name:"Cabin Trip", host:"Artez", cost:2698, deadline:"", eventDate:"", eventTime:"", location:"Lake Geneva, WI", pool:"", payType:"", payHandle:"", desc:"Weekend cabin getaway for the crew. SUVs, gas, and lodging split across everyone who's in.", isPublic:false, cover:"", familyOnly:false, owner:"Artez", hideRoster:false, inviteOnly:false, joinReqs:[], eventAdmins:[], guests:{}, chargeGuests:false,
+            members:[], vault:0, ledger:[], optedOut:[] }],
+  messages:[], // {scope:'group'|'dm', a, b, from, text, ts}
+  current:0, nextId:2
+};
+let me=null, myRole="member";
+
+function roleOf(n){const p=store.people.find(x=>x.name.toLowerCase()===String(n).toLowerCase());return p?p.role:"member";}
+function isEventAdmin(e){
+  if(!me || !e) return false;
+  if(e.host && e.host.toLowerCase()===me.toLowerCase()) return true;
+  if(e.owner && e.owner.toLowerCase()===me.toLowerCase()) return true;
+  if(Array.isArray(e.eventAdmins) && e.eventAdmins.some(n=>n.toLowerCase()===me.toLowerCase())) return true;
+  return false;
+}
+const canManage=()=>myRole==="admin"||myRole==="supervisor"||isEventAdmin(store.events[store.current]);
+const canAdmin=()=>myRole==="admin";
+
+/* ---- AUTH ---- */
+function showLogin(){ $('welcomeScreen').style.display='none'; $('loginScreen').style.display='flex'; $('appScreen').style.display='none'; document.body.classList.remove('app-open'); }
+function goToLogin(){ $('welcomeScreen').style.display='none'; showLogin(); }
+function showApp(){ $('loginScreen').style.display='none'; $('appScreen').style.display='block'; document.body.classList.add('app-open'); lastSeenMsgCount=store.messages.length; buildMsgTargets(); render(); }
+
+/* ---- TABS ---- */
+let activeTab='home';
+let lastSeenMsgCount=0;
+function showTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+t));
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('on', b.id==='nav-'+t));
+  document.querySelectorAll('.extra-btn').forEach(b=>b.classList.toggle('on', b.id==='nav-'+t));
+  if(t==='home'){ backToList(); }
+  if(t==='events'){ renderMyEvents(); }
+  if(t==='biz'){ renderBiz(); }
+  if(t==='chat'){ markAllSeen(); const c=$('nav-chat'); if(c) c.classList.remove('has-badge'); const ba=$('msgAlert'); if(ba) ba.style.display='none'; buildMsgTargets(); renderMessages(); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function showExtras(){ $('tabExtras').classList.add('show'); $('extrasBackdrop').classList.add('show'); }
+function hideExtras(){ $('tabExtras').classList.remove('show'); $('extrasBackdrop').classList.remove('show'); }
+// wire press-and-hold (and right-click) on the Home tab to reveal extra tabs
+(function(){
+  let holdTimer=null;
+  function start(e){ holdTimer=setTimeout(()=>{ showExtras(); }, 450); }
+  function cancel(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } }
+  function wire(){
+    const h=$('nav-home'); if(!h) return;
+    h.addEventListener('touchstart', start, {passive:true});
+    h.addEventListener('touchend', cancel);
+    h.addEventListener('touchmove', cancel);
+    h.addEventListener('mousedown', start);
+    h.addEventListener('mouseup', cancel);
+    h.addEventListener('mouseleave', cancel);
+    h.addEventListener('contextmenu', e=>{ e.preventDefault(); showExtras(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+})();
+// count messages relevant to me that I haven't seen and didn't send myself
+function unreadCount(){
+  if(!me) return 0;
+  const seen = parseInt(safeStore.get(SEEN_KEY())||'0', 10);
+  let count=0;
+  store.messages.forEach((m,i)=>{
+    if(m.from && m.from.toLowerCase()===me.toLowerCase()) return; // mine
+    // group msgs: only events I can see; DMs: only to me
+    if(m.scope==='group'){ const e=store.events.find(x=>x.id===m.event); if(!e || !canSeeEvent(e)) return; }
+    else if(m.scope==='dm'){ if(!m.to || m.to.toLowerCase()!==me.toLowerCase()) return; }
+    if(i>=seen) count++;
+  });
+  return count;
+}
+function SEEN_KEY(){ return 'kinfolks_seen_'+(me||'').toLowerCase(); }
+function markAllSeen(){ if(me) safeStore.set(SEEN_KEY(), String(store.messages.length)); }
+function updateChatBadge(){
+  const n = unreadCount();
+  const c=$('nav-chat'); if(c) c.classList.toggle('has-badge', n>0 && activeTab!=='chat');
+  // home banner
+  const ba=$('msgAlert');
+  if(ba){
+    if(n>0 && activeTab!=='chat'){
+      $('msgAlertText').textContent = n===1 ? 'You have 1 new message' : 'You have '+n+' new messages';
+      ba.style.display='flex';
+    } else { ba.style.display='none'; }
+  }
+}
+
+/* ---- AUTH (username + password) ---- */
+// lightweight hash (deters casual snooping; not bank-grade — see setup guide)
+function hashPass(s){ let h=5381; for(let i=0;i<s.length;i++){ h=((h<<5)+h)+s.charCodeAt(i); h|=0; } return h; }
+function findUser(u){ return store.people.find(x=>(x.username||'').toLowerCase()===u.toLowerCase()); }
+
+function setAuthMode(m){
+  const signin=m==='signin';
+  $('signinForm').style.display=signin?'block':'none';
+  $('signupForm').style.display=signin?'none':'block';
+  $('tabSignin').classList.toggle('on',signin);
+  $('tabSignup').classList.toggle('on',!signin);
+  $('loginMsg').textContent=''; $('signupMsg').textContent='';
+}
+
+let fpTarget=null;
+function openForgot(){
+  fpTarget=null;
+  $('forgotStep1').style.display='block'; $('forgotStep2').style.display='none';
+  $('fpUser').value=''; $('fpAnswer').value=''; $('fpNew').value=''; $('fpConfirm').value='';
+  $('fpMsg1').textContent=''; $('fpMsg2').textContent='';
+  open_('forgotModal');
+}
+function forgotFindUser(){
+  const u=$('fpUser').value.trim();
+  if(!u){ $('fpMsg1').textContent='Enter your username.'; return; }
+  const p=findUser(u);
+  if(!p || p.passHash===0){ $('fpMsg1').textContent='No account with that username.'; return; }
+  if(!p.secQ || !p.secAHash){ $('fpMsg1').textContent='No security question on file for this account. Message the organizer to reset it for you.'; return; }
+  fpTarget=p;
+  $('fpQuestion').textContent=p.secQ;
+  $('forgotStep1').style.display='none'; $('forgotStep2').style.display='block';
+}
+function forgotReset(){
+  if(!fpTarget){ return; }
+  const ans=$('fpAnswer').value.trim();
+  const np=$('fpNew').value; const cf=$('fpConfirm').value;
+  if(hashPass(ans.toLowerCase())!==fpTarget.secAHash){ $('fpMsg2').textContent='That answer doesn\'t match. Try again, or message the organizer.'; return; }
+  if(!np || np.length<6){ $('fpMsg2').textContent='New password must be at least 6 characters.'; return; }
+  if(np!==cf){ $('fpMsg2').textContent='Passwords don\'t match.'; return; }
+  fpTarget.passHash=hashPass(np);
+  pushPerson(fpTarget);
+  close_('forgotModal');
+  alert('Password reset! You can now sign in with your new password.');
+  fpTarget=null;
+}
+
+function doSignin(){
+  const u=$('siUser').value.trim(); const pw=$('siPass').value;
+  if(!u||!pw){ $('loginMsg').textContent='Enter your username and password.'; return; }
+  const p=findUser(u);
+  if(!p || p.passHash===0){ $('loginMsg').textContent='No account with that username. Create one first.'; return; }
+  if(p.passHash!==hashPass(pw)){ $('loginMsg').textContent='Wrong password. Try again.'; return; }
+  if(p.status==='pending'){ pendingUser=p; showWait(); return; }
+  if(p.status==='denied'){ $('loginMsg').textContent='Your request wasn\'t approved. Contact the organizer.'; return; }
+  enterApp(p);
+}
+
+function doSignup(){
+  const name=$('suName').value.trim();
+  const u=$('suUser').value.trim();
+  const pw=$('suPass').value;
+  const phone=$('suPhone').value.trim();
+  const email=$('suEmail').value.trim();
+  const ref=$('suRef').value.trim();
+  const code=$('suCode').value;
+  const secQ=$('suSecQ').value;
+  const secA=$('suSecA').value.trim();
+  if(!name){ $('signupMsg').textContent='Enter your display name.'; return; }
+  if(!u || u.length<3){ $('signupMsg').textContent='Pick a username (3+ characters).'; return; }
+  if(/\s/.test(u)){ $('signupMsg').textContent='Username can\'t have spaces.'; return; }
+  if(isInappropriate(u)){ $('signupMsg').textContent='That username isn\'t allowed. Please pick a respectful one.'; return; }
+  if(isInappropriate(name)){ $('signupMsg').textContent='That display name isn\'t allowed. Please pick a respectful one.'; return; }
+  if(!pw || pw.length<6){ $('signupMsg').textContent='Password must be at least 6 characters.'; return; }
+  if(!phone && !email){ $('signupMsg').textContent='Add a phone number or email so we can reach you.'; return; }
+  if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ $('signupMsg').textContent='That email doesn\'t look right.'; return; }
+  if(phone && phone.replace(/\D/g,'').length<7){ $('signupMsg').textContent='That phone number looks too short.'; return; }
+  const e0=store.events[store.current];
+  const needCode = !(e0 && e0.isPublic);
+  if(needCode && code!==CONFIG.ACCESS_CODE){ $('signupMsg').textContent='Wrong access code. Ask the organizer.'; return; }
+  const existing=findUser(u);
+  // reserved names (alex/artez/admin/etc.) — only claimable as a seeded admin account
+  if(isReservedName(u) && !(existing && existing.passHash===0)){
+    $('signupMsg').textContent='That username is reserved. Please choose a different one.'; return;
+  }
+  // no duplicate usernames (an active account already uses it)
+  if(existing && existing.passHash!==0){ $('signupMsg').textContent='That username is already taken. Pick another.'; return; }
+  if(!secQ){ $('signupMsg').textContent='Pick a security question (so you can reset your password later).'; return; }
+  if(!secA || secA.length<2){ $('signupMsg').textContent='Answer your security question.'; return; }
+
+  // admins (named in CONFIG) skip approval; everyone else must be approved
+  const isAdmin = CONFIG.ADMINS.includes(u.toLowerCase()) || CONFIG.ADMINS.includes(name.toLowerCase());
+
+  if(existing){
+    // claim a seeded/placeholder account (admin pre-added them) — auto-approved
+    existing.name=name; existing.phone=phone; existing.email=email; existing.passHash=hashPass(pw); existing.ref=ref; existing.status='approved';
+    if(isAdmin) existing.role='admin';
+    pushPerson(existing); enterApp(existing); return;
+  }
+
+  const p={ name, username:u, role:isAdmin?"admin":"member", phone, email, passHash:hashPass(pw), ref, status:isAdmin?"approved":"pending", secQ, secAHash:secA?hashPass(secA.toLowerCase()):0 };
+  store.people.push(p); pushPerson(p);
+  if(isAdmin){ enterApp(p); }
+  else { pendingUser=p; showWait(); }
+}
+
+let pendingUser=null;
+function showWait(){
+  $('loginScreen').style.display='none'; $('appScreen').style.display='none'; $('waitScreen').style.display='flex';
+  document.body.classList.remove('app-open');
+  $('waitName').innerHTML = pendingUser ? 'Requested as <strong>'+escapeHtml(pendingUser.name)+'</strong> (@'+escapeHtml(pendingUser.username)+')' : '';
+}
+function backToLogin(){ pendingUser=null; $('waitScreen').style.display='none'; showLogin(); }
+async function checkApproval(){
+  if(!pendingUser) return backToLogin();
+  if(LIVE){ try{ const {data}=await sb.from('people').select('*').ilike('username',pendingUser.username); if(data&&data[0]){ pendingUser.status=data[0].status; pendingUser.role=data[0].role; } }catch(e){} }
+  if(pendingUser.status==='approved'){ enterApp(pendingUser); }
+  else if(pendingUser.status==='denied'){ alert('Your request wasn\'t approved. Contact the organizer.'); backToLogin(); }
+  else { alert('Not approved yet. Hang tight — an admin still needs to approve you.'); }
+}
+
+function enterApp(p){
+  me=p.name; myRole=p.role; pendingUser=null;
+  // remember this user for auto sign-in next time (works on hosted site)
+  const rem=$('rememberMe'); if(!rem || rem.checked){ safeStore.set(REMEMBER_KEY, p.username||''); }
+  // first time ever signing in: start their "seen" marker at current message count (no false unread)
+  if(safeStore.get(SEEN_KEY())===null){ safeStore.set(SEEN_KEY(), String(store.messages.length)); }
+  $('waitScreen').style.display='none';
+  $('whoami').textContent=me+" · "+myRole;
+  $('ribbon').className='ribbon '+(LIVE?'live':'demo');
+  $('ribbon').textContent=LIVE?'Live · synced across the whole group in real time.':'Demo mode · data stays on this phone. Add Supabase keys to sync the whole group.';
+  if(LIVE) initLive(); else showApp();
+  applyMyTheme();
+}
+function logout(){ me=null; myRole="member"; pendingUser=null; safeStore.del(REMEMBER_KEY); document.body.classList.remove('light'); ['siUser','siPass','suName','suUser','suPass','suPhone','suEmail','suRef','suCode'].forEach(id=>{const el=$(id); if(el)el.value='';}); setAuthMode('signin'); showLogin(); }
+// try to auto sign-in a remembered user (called after data loads)
+function tryAutoLogin(){
+  const u=safeStore.get(REMEMBER_KEY);
+  if(!u) return false;
+  const p=findUser(u);
+  if(p && p.passHash!==0 && isApproved(p)){ enterApp(p); return true; }
+  return false;
+}
+
+/* ---- EVENT HELPERS ---- */
+const ev=()=>store.events[store.current];
+function isOutOf(e,name){ return e.optedOut.some(n=>n.toLowerCase()===String(name).toLowerCase()); }
+function isOut(name){ return isOutOf(ev(),name); }
+function isApproved(p){ return (p.status||'approved')==='approved'; }
+function approvedPeople(){ return store.people.filter(isApproved); }
+function guestsOf(e, name){ const g=e.guests||{}; const k=Object.keys(g).find(n=>n.toLowerCase()===String(name).toLowerCase()); return k?(parseInt(g[k],10)||0):0; }
+function totalGuests(e){ const g=e.guests||{}; let t=0; approvedPeople().forEach(p=>{ if(countsIn(e,p.name)) t+=guestsOf(e,p.name); }); return t; }
+function countsIn(e,name){
+  if(e.hideRoster || e.inviteOnly) return isJoined(e,name);
+  return !isOutOf(e,name);
+}
+function headcountOf(e){
+  // base people counted in the split
+  let base;
+  if(e.hideRoster || e.inviteOnly){
+    base = approvedPeople().filter(p=>isJoined(e,p.name)).length;
+  } else {
+    base = approvedPeople().filter(p=>!isOutOf(e,p.name)).length;
+  }
+  // plus-ones always add to the headcount (how many bodies are coming)
+  const guests = totalGuests(e);
+  return (base + guests) || 1;
+}
+function headcount(){ return headcountOf(ev()); }
+// the cost is split across paying "shares". If the host charges for guests,
+// each guest is a paying share; if not, only the members pay.
+function payingSharesOf(e){
+  let base;
+  if(e.hideRoster || e.inviteOnly){ base = approvedPeople().filter(p=>isJoined(e,p.name)).length; }
+  else { base = approvedPeople().filter(p=>!isOutOf(e,p.name)).length; }
+  const shares = base + (e.chargeGuests ? totalGuests(e) : 0);
+  return shares || 1;
+}
+function perPersonOf(e){ return e.cost/payingSharesOf(e); }
+// what a specific person owes (their own share + their guests' shares if charged)
+function owedByOf(e, name){
+  const per = perPersonOf(e);
+  const myGuests = e.chargeGuests ? guestsOf(e, name) : 0;
+  return per * (1 + myGuests);
+}
+function perPerson(){ return perPersonOf(ev()); }
+function daysLeftOf(e){ if(!e.deadline)return null; const d=new Date(e.deadline+'T23:59:59'); return Math.ceil((d-new Date())/(1000*60*60*24)); }
+function fmtEventWhen(e){
+  if(!e.eventDate) return '';
+  const d=new Date(e.eventDate+'T'+(e.eventTime||'12:00')+':00');
+  const dateStr=d.toLocaleDateString(undefined,{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+  if(e.eventTime){
+    const timeStr=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+    return dateStr+' · '+timeStr;
+  }
+  return dateStr;
+}
+function fmtEventWhenShort(e){
+  if(!e.eventDate) return '';
+  const d=new Date(e.eventDate+'T'+(e.eventTime||'12:00')+':00');
+  const dateStr=d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  return e.eventTime ? dateStr+' · '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) : dateStr;
+}
+
+let viewMode='list'; // 'list' | 'detail'
+
+function canSeeEvent(e){
+  // family-only events are visible to: the owner, anyone in the owner's family circle, and admins
+  if(!e.familyOnly) return true;
+  if(!me) return false;
+  if(canAdmin()) return true;
+  if(e.owner && e.owner.toLowerCase()===me.toLowerCase()) return true;
+  const ownerP = store.people.find(p=>e.owner && p.name.toLowerCase()===e.owner.toLowerCase());
+  const ownerFam = (ownerP && Array.isArray(ownerP.family)) ? ownerP.family : [];
+  return ownerFam.some(n=>n.toLowerCase()===me.toLowerCase());
+}
+function renderEventCards(){
+  const host = $('eventCards');
+  $('newEventBtn').style.display = canManage()?'block':'none';
+  // split: events I'm IN vs others (hide family-only events I'm not allowed to see)
+  const mine=[], others=[];
+  store.events.forEach((e,i)=>{ if(!canSeeEvent(e)) return; (me && !isOutOf(e,me) ? mine : others).push(i); });
+  const cardHtml = i=>{
+    const e=store.events[i];
+    const raised=e.members.reduce((s,m)=>s+Number(m.paid),0);
+    const pct=Math.min(100,e.cost?(raised/e.cost*100):0);
+    const iAmIn = me && !isOutOf(e,me);
+    const cover = e.cover || 'linear-gradient(135deg,#e6b324,#0d0d0d 60%,#d72631)';
+    const bg = e.cover ? `url('${e.cover}')` : cover;
+    let due=''; const dl=daysLeftOf(e);
+    if(dl!==null){ const ds=new Date(e.deadline+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      const cls=dl<0?'late':dl<=7?'warn':''; due=`<span class="ev-due ${cls}">${dl<0?'past due':dl+'d left'} · ${ds}</span>`; }
+    return `<div class="ev-card ${iAmIn?'mine':''}" onclick="openEvent(${i})">
+      <div class="ev-cover" style="background-image:${bg}"><div class="ev-cover-ov"></div>${e.eventDate?`<div class="ev-date-chip">🗓️ ${fmtEventWhenShort(e)}</div>`:''}<div class="ev-cover-name">${escapeHtml(e.name)}</div></div>
+      <div class="ev-body">
+        <div class="ev-meta">
+          <span class="ev-host">Host: ${escapeHtml(e.host||'—')}${e.location?' · 📍 '+escapeHtml(e.location):''}</span>
+          <span class="ev-status ${iAmIn?'st-in':'st-out'}">${iAmIn?'YOU\'RE IN':'NOT IN'}</span>
+        </div>
+        ${e.desc?`<div class="ev-desc">${escapeHtml(e.desc)}</div>`:''}
+        <div class="ev-mini-bar"><div class="ev-mini-fill" style="width:${pct}%"></div></div>
+        <div class="ev-meta" style="margin-top:6px;">
+          <span class="ev-host">${pct.toFixed(0)}% funded</span>${due}
+        </div>
+      </div></div>`;
+  };
+  let html='';
+  if(mine.length){ html+=`<div class="list-sub">Your Events</div>`+mine.map(cardHtml).join(''); }
+  if(others.length){ html+=`<div class="list-sub">${mine.length?'Other Events':'All Events'}</div>`+others.map(cardHtml).join(''); }
+  if(!store.events.length) html='<div class="hint">No events yet. Create one below.</div>';
+  host.innerHTML=html;
+}
+
+function openEvent(i){ store.current=i; viewMode='detail'; $('homeList').style.display='none'; $('eventDetail').style.display='block'; buildMsgTargets(); render(); window.scrollTo({top:0}); }
+function backToList(){ viewMode='list'; $('eventDetail').style.display='none'; $('homeList').style.display='block'; renderEventCards(); updateChatBadge(); window.scrollTo({top:0}); }
+
+function renderMyEvents(){
+  const host=$('myEventCards'); if(!host) return;
+  const mine=[];
+  store.events.forEach((e,i)=>{ if(me && !isOutOf(e,me)) mine.push(i); });
+  if(!mine.length){ host.innerHTML='<div class="hint">You haven\'t opted into any events yet. Browse Home and tap into one to join.</div>'; return; }
+  host.innerHTML=mine.map(i=>{
+    const e=store.events[i];
+    const share=perPersonOf(e);
+    const m=e.members.find(x=>x.name.toLowerCase()===me.toLowerCase());
+    const myPaid=m?m.paid:0;
+    const myPct=Math.min(100, share>0?(myPaid/share*100):0);
+    let status,scls;
+    if(share>0 && myPaid>=share-0.01){ status='Paid in full ✓'; scls='st-in'; }
+    else if(myPaid>0){ status='$'+money(Math.max(0,share-myPaid))+' left'; scls='st-due'; }
+    else { status='Not paid yet'; scls='st-out'; }
+    let due=''; const dl=daysLeftOf(e);
+    if(dl!==null){ const cls=dl<0?'late':dl<=7?'warn':''; due=`<span class="ev-due ${cls}">${dl<0?'past due':dl+' days left'}</span>`; }
+    const bg = e.cover ? `url('${e.cover}')` : 'linear-gradient(135deg,#e6b324,#0d0d0d 60%,#d72631)';
+    return `<div class="ev-card mine" onclick="openEventFromTab(${i})">
+      <div class="ev-cover" style="background-image:${bg};height:64px;"><div class="ev-cover-ov"></div><div class="ev-cover-name" style="font-size:15px;">${escapeHtml(e.name)}</div></div>
+      <div class="ev-body">
+        <div class="ev-meta"><span class="ev-host">Your share: $${money(share)}</span><span class="ev-status ${scls}">${status}</span></div>
+        <div class="ev-mini-bar"><div class="ev-mini-fill" style="width:${myPct}%"></div></div>
+        <div class="ev-meta" style="margin-top:6px;"><span class="ev-host">You've paid $${money(myPaid)}</span>${due}</div>
+      </div></div>`;
+  }).join('');
+}
+function openEventFromTab(i){ showTab('home'); openEvent(i); }
+
+function roleTagHtml(role){const m={admin:['role-admin','Admin'],supervisor:['role-super','Supervisor'],member:['role-member','Member']};const[c,l]=m[role]||m.member;return `<span class="role-tag ${c}">${l}</span>`;}
+
+/* ---- DEADLINE ---- */
+function daysLeft(){ return daysLeftOf(ev()); }
+function renderDeadline(){
+  const e=ev(); const row=$('deadlineRow');
+  $('dlBtn').style.display=canManage()?'block':'none';
+  if(!e.deadline){ row.className='deadline-row ok'; $('dlIco').textContent='📅'; $('dlDate').textContent='No deadline set'; $('calBtn').style.display='none'; return; }
+  $('calBtn').style.display='block';
+  const dl=daysLeft();
+  const dateStr=new Date(e.deadline+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  if(dl<0){ row.className='deadline-row late'; $('dlIco').textContent='⚠️'; $('dlDate').textContent=dateStr+' · past due'; }
+  else if(dl<=7){ row.className='deadline-row warn'; $('dlIco').textContent='⏰'; $('dlDate').textContent=dateStr+' · '+dl+' day'+(dl===1?'':'s')+' left'; }
+  else { row.className='deadline-row ok'; $('dlIco').textContent='📅'; $('dlDate').textContent=dateStr+' · '+dl+' days left'; }
+}
+function setDeadline(){ if(!canManage())return; const cur=ev().deadline||''; const v=prompt("Money due by (YYYY-MM-DD):", cur); if(v!==null){ ev().deadline=v.trim(); pushEvent(); render(); } }
+function addToCalendar(){
+  const e=ev(); if(!e.deadline)return;
+  const d=e.deadline.replace(/-/g,'');
+  const ics=`BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Kinfolks//EN\nBEGIN:VEVENT\nUID:kinfolks-${e.id}@kinfolks\nDTSTART;VALUE=DATE:${d}\nSUMMARY:${e.name} — money due (Kinfolks)\nDESCRIPTION:Your share: $${money(perPerson())}. Pay via the host's PayPal or Venmo.\nEND:VEVENT\nEND:VCALENDAR`;
+  const blob=new Blob([ics],{type:'text/calendar'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`${e.name}-deadline.ics`; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ---- OPT IN/OUT ---- */
+function isJoined(e,name){
+  if(!name) return false;
+  if(Array.isArray(e.joined) && e.joined.some(n=>n.toLowerCase()===name.toLowerCase())) return true;
+  if(e.members.some(m=>m.name.toLowerCase()===name.toLowerCase())) return true; // paid = in
+  // default-open events: everyone not opted out counts as in
+  if(!e.hideRoster && !e.inviteOnly && !isOutOf(e,name)) return true;
+  return false;
+}
+function hasRequested(e,name){ return Array.isArray(e.joinReqs) && e.joinReqs.some(n=>n.toLowerCase()===name.toLowerCase()); }
+
+function plusOneHtml(e){
+  const n=guestsOf(e, me);
+  const note = e.chargeGuests
+    ? `Each guest adds a share to what you pay.`
+    : `Guests are counted for headcount only — no extra charge.`;
+  return `<div class="plusone">
+      <div class="plusone-top">
+        <span>👥 My plus-ones</span>
+        <div class="stepper">
+          <button onclick="setGuests(-1)">−</button>
+          <span id="guestNum">${n}</span>
+          <button onclick="setGuests(1)">＋</button>
+        </div>
+      </div>
+      <div class="hint" style="margin:6px 0 0;">${note}</div>
+    </div>`;
+}
+function setGuests(delta){
+  const e=ev(); if(!me) return;
+  if(!e.guests) e.guests={};
+  const k=Object.keys(e.guests).find(n=>n.toLowerCase()===me.toLowerCase()) || me;
+  let n=(parseInt(e.guests[k],10)||0)+delta;
+  if(n<0) n=0; if(n>20) n=20;
+  if(n===0) delete e.guests[k]; else e.guests[k]=n;
+  pushEvent(); render();
+}
+function renderOptBox(){
+  const e=ev(); const box=$('myOptBox');
+  if(!me){ box.innerHTML=''; return; }
+  const joined=isJoined(e,me);
+  const out=isOut(me);
+
+  // INVITE-ONLY and not joined → request to join / pending
+  if(e.inviteOnly && !joined && !canManage()){
+    if(hasRequested(e,me)){
+      box.innerHTML = `<div class="hint" style="margin-top:0;margin-bottom:10px;">⏳ Your request to join is <strong>waiting for the host</strong>. You'll be counted once they approve you.</div>`;
+    } else {
+      box.innerHTML = `<div class="hint" style="margin-top:0;margin-bottom:10px;">This is an <strong>invite-only</strong> event. Ask to join and the host will approve you.</div>
+        <button class="full" onclick="requestJoin()">Request to Join</button>`;
+    }
+    return;
+  }
+
+  // already joined
+  if(joined){
+    box.innerHTML = `<div class="hint" style="margin-top:0;margin-bottom:10px;">You're <strong>in</strong> on this event. You're counted in the per-person split.</div>
+      ${plusOneHtml(e)}
+      <button class="secondary full" style="margin-top:10px;" onclick="leaveEvent()">Leave this event</button>`;
+    return;
+  }
+
+  // open event where the user counts unless opted out → show plus-ones too
+  if(!e.hideRoster && !e.inviteOnly && !out){
+    box.innerHTML = `<div class="hint" style="margin-top:0;margin-bottom:10px;">You're counted in this event's split. Add plus-ones if you're bringing guests.</div>
+      ${plusOneHtml(e)}`;
+    return;
+  }
+
+  // open / hidden-roster event, not joined yet → join button
+  box.innerHTML = `<div class="hint" style="margin-top:0;margin-bottom:10px;">You're not in this event yet. Join to be counted in the split and see who else is in.</div>
+    <button class="full" onclick="joinEvent()">Join this event</button>`;
+}
+
+function joinEvent(){
+  const e=ev();
+  if(!Array.isArray(e.joined)) e.joined=[];
+  if(!e.joined.some(n=>n.toLowerCase()===me.toLowerCase())) e.joined.push(me);
+  e.optedOut = e.optedOut.filter(n=>n.toLowerCase()!==me.toLowerCase());
+  e.ledger.push({type:'in',note:me+' joined',amt:0});
+  pushEvent(); render();
+}
+function leaveEvent(){
+  const e=ev();
+  if(Array.isArray(e.joined)) e.joined = e.joined.filter(n=>n.toLowerCase()!==me.toLowerCase());
+  if(!isOutOf(e,me)) e.optedOut.push(me);
+  e.ledger.push({type:'in',note:me+' left the event',amt:0});
+  pushEvent(); render();
+}
+function requestRefund(){
+  const e=ev();
+  const mine = e.members.find(x=>me && x.name.toLowerCase()===me.toLowerCase());
+  const amt = mine?mine.paid:0;
+  if(!(amt>0)){ alert('No payment on record to refund.'); return; }
+  const host = e.host || 'the host';
+  if(!confirm(`Send a refund request for $${money(amt)} to ${host}? They'll get a message in the app and handle it through Venmo/PayPal.`)) return;
+  // DM the host (fall back to a group message if host isn't a known user)
+  const hostUser = personByName(host);
+  const text = `💸 Refund request: I paid $${money(amt)} for "${e.name}" but opted out. Could you send it back via ${e.payType==='venmo'?'Venmo':e.payType==='paypal'?'PayPal':'Venmo/PayPal'} when you get a chance? Thanks!`;
+  let m;
+  if(hostUser && me && hostUser.name.toLowerCase()!==me.toLowerCase()){
+    m={scope:'dm', key:dmKey(me,host), from:me, to:host, text, ts:Date.now()};
+  } else {
+    m={scope:'group', event:e.id, from:me, text, ts:Date.now()};
+  }
+  store.messages.push(m); pushMessage(m);
+  e.ledger.push({type:'out',note:me+' requested a refund of $'+money(amt),amt:0}); pushEvent();
+  alert('Your refund request was sent to '+host+'. They handle the actual refund through Venmo/PayPal.');
+  render();
+}
+
+function requestJoin(){
+  const e=ev();
+  if(!Array.isArray(e.joinReqs)) e.joinReqs=[];
+  if(!e.joinReqs.some(n=>n.toLowerCase()===me.toLowerCase())) e.joinReqs.push(me);
+  pushEvent(); render();
+}
+function approveJoin(name){
+  if(!canManage())return;
+  const e=ev();
+  e.joinReqs = (e.joinReqs||[]).filter(n=>n.toLowerCase()!==name.toLowerCase());
+  if(!Array.isArray(e.joined)) e.joined=[];
+  if(!e.joined.some(n=>n.toLowerCase()===name.toLowerCase())) e.joined.push(name);
+  e.optedOut = e.optedOut.filter(n=>n.toLowerCase()!==name.toLowerCase());
+  e.ledger.push({type:'in',note:name+' was approved to join',amt:0});
+  pushEvent(); render();
+}
+function denyJoin(name){
+  if(!canManage())return;
+  const e=ev();
+  e.joinReqs = (e.joinReqs||[]).filter(n=>n.toLowerCase()!==name.toLowerCase());
+  pushEvent(); render();
+}
+// legacy opt toggle kept for compatibility
+function toggleMyOpt(){ if(isJoined(ev(),me)) leaveEvent(); else joinEvent(); }
+
+function render(){
+  const e=ev();
+  renderEventCards();
+  $('eventTitle').textContent=e.name;
+
+  // cover photo
+  const cov=$('cover');
+  if(e.cover){ cov.style.backgroundImage=`url('${e.cover}')`; }
+  else { cov.style.backgroundImage='linear-gradient(135deg,#e6b324,#0d0d0d 60%,#d72631)'; }
+  $('coverBtn').style.display=canManage()?'block':'none';
+
+  // description
+  const db=$('descBox');
+  if(e.desc){ db.innerHTML = escapeHtml(e.desc) + (canManage()?' <button class="linkbtn" style="color:var(--green)" onclick="editDesc()">edit</button>':''); db.style.display='block'; }
+  else { db.innerHTML = canManage()?'<button class="linkbtn" style="color:var(--green)" onclick="editDesc()">+ add a description</button>':''; db.style.display=canManage()?'block':'none'; }
+
+  // privacy badges
+  const pb=$('privacyBadges');
+  if(pb){
+    const badges=[];
+    if(e.familyOnly) badges.push('<span class="pbadge">👪 Family circle only</span>');
+    if(e.inviteOnly) badges.push('<span class="pbadge">✉️ Invite-only</span>');
+    else if(e.hideRoster) badges.push('<span class="pbadge">🔒 People list private</span>');
+    pb.innerHTML = badges.join(' ');
+    pb.style.display = badges.length?'block':'none';
+  }
+
+  // when & where card
+  const wc=$('whenCard');
+  if(wc){
+    const when=fmtEventWhen(e);
+    if(when || e.location || canManage()){
+      wc.style.display='flex';
+      $('whenDate').textContent = when || (canManage()?'Set the event date':'Date TBD');
+      const wl=$('whenLoc');
+      if(e.location){ wl.textContent='📍 '+e.location; wl.style.display='block'; }
+      else { wl.style.display='none'; }
+      $('whenEditBtn').style.display=canManage()?'block':'none';
+    } else { wc.style.display='none'; }
+  }
+
+  $('hostAv').textContent=e.host?initials(e.host):'?';
+  $('hostName').textContent=e.host||'Not set';
+  $('hostBtn').style.display=canManage()?'block':'none';
+  $('renameBtn').style.display=canManage()?'inline':'none';
+
+  renderDeadline();
+
+  const manage=canManage();
+  $('optCost').disabled=!manage; $('optCost').value=e.cost||'';
+  $('optPeople').value=headcount();
+  $('costLock').textContent=manage?'':'🔒 view only';
+  $('costNote').textContent=manage?'':'Only admins and supervisors can change the cost.';
+  $('perPerson').textContent=money(perPerson());
+  $('payHint').textContent=money(perPerson());
+  $('goal').textContent=money0(e.cost);
+  const outCount=e.optedOut.length;
+  $('headcount').innerHTML=`${headcount()} people in${outCount?` · ${outCount} opted out`:''}`;
+
+  const raised=e.members.reduce((s,m)=>s+Number(m.paid),0);
+  $('raised').textContent=money0(raised);
+  const pct=Math.min(100,e.cost?(raised/e.cost*100):0);
+  $('fill').style.width=pct+'%'; $('pct').textContent=pct.toFixed(0);
+  $('remaining').textContent='$'+money0(Math.max(0,e.cost-raised));
+
+  // payment (PayPal / Venmo)
+  const payUrl = paymentUrl(e);
+  if(payUrl){ $('poolLink').href=payUrl; $('poolLink').style.display='block';
+    $('poolLink').textContent = (e.payType==='venmo'?'Pay with Venmo':'Pay with PayPal')+' →'; }
+  else { $('poolLink').style.display='none'; }
+  $('poolSet').innerHTML = e.payHandle
+    ? (manage? (e.payType==='venmo'?'Venmo':'PayPal')+': '+escapeHtml(e.payHandle)+' · <button class="linkbtn" style="color:var(--green)" onclick="setPay()">change</button>' : 'Pay via '+(e.payType==='venmo'?'Venmo':'PayPal')+'.')
+    : (manage? 'No payment set. <button class="linkbtn" style="color:var(--green)" onclick="setPay()">Add PayPal or Venmo</button>' : 'Host hasn\'t set up payment yet.');
+
+  renderOptBox();
+
+  // refund policy note + request-refund button
+  const rn=$('refundNote');
+  if(rn){
+    const dl=daysLeftOf(e);
+    let policy;
+    if(e.deadline){
+      const d=new Date(e.deadline+'T23:59:59');
+      const nice=d.toLocaleDateString(undefined,{month:'long',day:'numeric'});
+      if(dl!==null && dl<0){
+        policy=`<strong>Refund policy:</strong> The due date (${nice}) has passed, so payments are generally non-refundable — the host may have already spent the money. Anything back is up to the host.`;
+      } else {
+        policy=`<strong>Refund policy:</strong> If you opt out <strong>before ${nice}</strong>, you can ask the host for a full refund. After that date, refunds aren't guaranteed since the money may already be spent.`;
+      }
+    } else {
+      policy=`<strong>Refund policy:</strong> No due date is set. If you opt out, ask the host about getting your money back before they spend it. Refunds are handled by the host, not the app.`;
+    }
+    // does the current user have money in but is now opted out / not joined?
+    const mine = e.members.find(x=>me && x.name.toLowerCase()===me.toLowerCase());
+    const paidAmt = mine?mine.paid:0;
+    const showReqBtn = me && paidAmt>0 && (isOut(me) || (!isJoined(e,me)));
+    rn.innerHTML = policy + (showReqBtn
+      ? `<div style="margin-top:8px;"><button class="sm" onclick="requestRefund()" style="background:var(--gold);color:#000;">Request my $${money(paidAmt)} back from host</button></div>`
+      : '');
+  }
+
+  const list=$('memberList');
+  const viewerIn = isJoined(e,me);
+  const rosterLocked = (e.hideRoster || e.inviteOnly) && !viewerIn && !canManage();
+  // join requests panel (host only, invite-only events)
+  let reqHtml='';
+  if(canManage() && e.inviteOnly && (e.joinReqs||[]).length){
+    reqHtml = `<div style="background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:12px;margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--gold);margin-bottom:8px;">Join Requests (${e.joinReqs.length})</div>
+      ${e.joinReqs.map(n=>`<div class="member" style="background:var(--card);padding:8px 10px;">
+        <div class="avatar" style="width:30px;height:30px;font-size:12px;">${avatarByName(n)}</div>
+        <div class="m-info"><div class="m-name">${escapeHtml(n)}</div></div>
+        <div style="display:flex;gap:6px;">
+          <button class="sm" onclick="approveJoin('${escapeHtml(n).replace(/'/g,"\\'")}')">✓</button>
+          <button class="secondary sm" onclick="denyJoin('${escapeHtml(n).replace(/'/g,"\\'")}')">✕</button>
+        </div></div>`).join('')}
+    </div>`;
+  }
+
+  if(rosterLocked){
+    list.innerHTML = reqHtml + `<div class="hint" style="text-align:center;padding:18px;">🔒 The people list is private. ${e.inviteOnly?'Join (with the host\'s approval)':'Join this event'} to see who's in and who's paid.</div>`;
+  } else {
+    // only show people who are IN this event (joined / paid)
+    const inPeople = store.people.filter(p=>isJoined(e,p.name));
+    const iManage = canManage();
+    const rows = inPeople.map(p=>{
+      const m=e.members.find(x=>x.name.toLowerCase()===p.name.toLowerCase());
+      const paid=m?m.paid:0;
+      const share=owedByOf(e, p.name);
+      let cls='unpaid',txt='Not paid';
+      if(share>0 && paid>=share-0.01){ cls='paid'; txt='Paid in full'; }
+      else if(paid>0){ cls='partial'; txt='Partial · $'+money(Math.max(0,share-paid))+' left'; }
+      const via = (paid>0 && m && m.method) ? `<div class="hint" style="margin-top:1px;">Paid via ${escapeHtml(m.method)}</div>` : '';
+      const gN = guestsOf(e, p.name);
+      const guestTag = gN>0 ? `<span class="guest-tag">+${gN} guest${gN>1?'s':''}</span>` : '';
+      const isEvAdmin = (Array.isArray(e.eventAdmins) && e.eventAdmins.some(n=>n.toLowerCase()===p.name.toLowerCase())) || (e.host&&e.host.toLowerCase()===p.name.toLowerCase());
+      const evTag = isEvAdmin ? '<span class="evadmin-tag">⭐ Event Admin</span>' : '';
+      const isHost = e.host&&e.host.toLowerCase()===p.name.toLowerCase();
+      const nm=escapeHtml(p.name).replace(/'/g,"\\'");
+      // manage button: host/owner can't be demoted; you can't manage yourself out via this
+      let manageBtn='';
+      if(iManage && !isHost){
+        manageBtn = isEvAdmin
+          ? `<button class="secondary sm" style="flex:none;" onclick="removeEventAdmin('${nm}')">Remove admin</button>`
+          : `<button class="secondary sm" style="flex:none;" onclick="makeEventAdmin('${nm}')">Make admin</button>`;
+      }
+      const isMe = me && p.name.toLowerCase()===me.toLowerCase();
+      const msgBtn = !isMe ? `<button class="msg-btn" title="Message ${escapeHtml(p.name)}" onclick="event.stopPropagation();chatWith('${nm}')">💬</button>` : '';
+      const tap = !isMe ? ` onclick="chatWith('${nm}')" style="cursor:pointer;"` : '';
+      return `<div class="member"${tap}><div class="avatar">${avatarImg(p)}</div>
+        <div class="m-info"><div class="m-name">${escapeHtml(p.name)}${isMe?' <span class="hint">(you)</span>':''} <span class="in-tag">IN</span> ${evTag} ${roleTagHtml(p.role)}</div><div class="m-status ${cls}">${txt}</div>${via}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex:none;">${msgBtn}${manageBtn || `<div class="m-amt">$${money(paid)}</div>`}</div></div>`;
+    });
+    list.innerHTML = reqHtml + (rows.join('') || '<div class="hint">No one\'s joined yet. Be the first!</div>');
+  }
+
+  $('spendBtn').disabled=!manage;
+  $('vaultNote').textContent=manage?'':'Only admins and supervisors can log spending.';
+  $('vaultBalance').textContent=money(e.vault);
+
+  renderRoster();
+  renderMyProfile();
+  renderMyFamily();
+  renderAccess();
+  renderSuggestions();
+  renderMyEvents();
+  renderMessages();
+  updateChatBadge();
+
+  $('ledger').innerHTML=!e.ledger.length?'<div class="hint">No activity yet.</div>':
+    e.ledger.slice().reverse().map(x=>{
+      if(x.amt===0){ return `<div class="ledger-item"><span>${escapeHtml(x.note)}</span><span class="hint" style="margin:0">note</span></div>`; }
+      const sign=x.type==='in'?'+':'−';
+      return `<div class="ledger-item"><span>${escapeHtml(x.note)}</span><span class="${x.type}">${sign}$${money(x.amt)}</span></div>`;
+    }).join('');
+}
+
+/* ---- SETTINGS: theme + delete account ---- */
+let currentTheme='dark';
+function setTheme(t){
+  currentTheme=t;
+  document.body.classList.toggle('light', t==='light');
+  document.querySelectorAll('#themeSeg .seg-btn').forEach(b=>b.classList.toggle('on', b.dataset.theme===t));
+  const p=myPerson(); if(p){ p.theme=t; pushPerson(p); }
+}
+function applyMyTheme(){
+  const p=myPerson();
+  setTheme((p && p.theme)||'dark');
+}
+function confirmDeleteAccount(){
+  if(!me){ return; }
+  const name=me;
+  if(!confirm(`Delete your Kinfolks account, ${name}? This removes you from the family list and you'll be signed out. This can't be undone.`)) return;
+  if(!confirm(`Are you sure? Tap OK to permanently delete "${name}".`)) return;
+  // remove from people
+  const idx=store.people.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(idx>=0){
+    const removed=store.people[idx];
+    store.people.splice(idx,1);
+    deletePersonRemote(removed);
+  }
+  // remove from any event opt lists / joined / members (their paid history stays in ledger notes)
+  store.events.forEach(e=>{
+    e.optedOut=(e.optedOut||[]).filter(n=>n.toLowerCase()!==name.toLowerCase());
+    if(Array.isArray(e.joined)) e.joined=e.joined.filter(n=>n.toLowerCase()!==name.toLowerCase());
+    if(Array.isArray(e.joinReqs)) e.joinReqs=e.joinReqs.filter(n=>n.toLowerCase()!==name.toLowerCase());
+    pushEvent(e);
+  });
+  alert('Your account has been deleted. Take care!');
+  logout();
+}
+async function deletePersonRemote(p){ if(!LIVE)return; try{ await sb.from('people').delete().ilike('name',p.name); }catch(e){} }
+
+function renderMyProfile(){
+  const av=$('myAvatar'); if(!av) return;
+  const p=myPerson();
+  av.innerHTML = p?avatarImg(p):initials(me||'?');
+  const nm=$('myProfileName'); if(nm) nm.textContent = me||'—';
+  const rm=$('removePicBtn'); if(rm) rm.style.display = (p&&p.pic)?'block':'none';
+}
+function onPicChosen(ev){
+  const file=ev.target.files&&ev.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      // crop to square + shrink to 256px so it's small enough to sync
+      const size=256; const c=document.createElement('canvas'); c.width=size; c.height=size;
+      const ctx=c.getContext('2d');
+      const m=Math.min(img.width,img.height); const sx=(img.width-m)/2; const sy=(img.height-m)/2;
+      ctx.drawImage(img,sx,sy,m,m,0,0,size,size);
+      const data=c.toDataURL('image/jpeg',0.82);
+      const p=myPerson(); if(p){ p.pic=data; pushPerson(p); renderMyProfile(); render(); }
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  ev.target.value='';
+}
+function removeMyPic(){ const p=myPerson(); if(p){ p.pic=''; pushPerson(p); renderMyProfile(); render(); } }
+function adminResetPass(name){
+  if(!canAdmin())return;
+  const p=store.people.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!p)return;
+  const temp=prompt('Set a temporary password for '+name+'. Tell it to them, and they can change it in Settings after they sign in.\n\nNew temporary password (at least 6 characters):');
+  if(temp===null) return;
+  if(temp.length<6){ alert('Password must be at least 6 characters.'); return; }
+  p.passHash=hashPass(temp);
+  pushPerson(p);
+  alert(name+'\'s password is now: '+temp+'\n\nShare it with them privately. They can change it in Settings → Change Password.');
+}
+
+function adminRemovePic(name){
+  if(!canAdmin())return;
+  if(!confirm('Remove '+name+'\'s profile picture? Use this if it\'s inappropriate.'))return;
+  const p=store.people.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(p){ p.pic=''; pushPerson(p); render(); }
+}
+function openChangePass(){ $('cpCurrent').value=''; $('cpNew').value=''; $('cpConfirm').value=''; $('cpMsg').textContent=''; open_('changePassModal'); }
+function saveNewPass(){
+  const p=myPerson(); if(!p){ return; }
+  const cur=$('cpCurrent').value, nw=$('cpNew').value, cf=$('cpConfirm').value;
+  if(p.passHash!==hashPass(cur)){ $('cpMsg').textContent='Your current password isn\'t right.'; return; }
+  if(!nw || nw.length<6){ $('cpMsg').textContent='New password must be at least 6 characters.'; return; }
+  if(nw!==cf){ $('cpMsg').textContent='The new passwords don\'t match.'; return; }
+  if(nw===cur){ $('cpMsg').textContent='That\'s already your password. Pick a new one.'; return; }
+  p.passHash=hashPass(nw); pushPerson(p);
+  close_('changePassModal');
+  alert('Password updated! Use your new password next time you sign in.');
+}
+
+function myPerson(){ return store.people.find(p=>me && p.name.toLowerCase()===me.toLowerCase()); }
+function myFamily(){ const p=myPerson(); return (p && Array.isArray(p.family)) ? p.family : []; }
+/* ---- BUSINESS SPOTLIGHT ---- */
+function normalizeUrl(u){
+  u=String(u).trim(); if(!u) return '';
+  if(/^https?:\/\//i.test(u)) return u;
+  return 'https://'+u.replace(/^\/+/,'');
+}
+function igLink(h){
+  h=String(h).trim(); if(!h) return '';
+  if(/^https?:\/\//i.test(h)) return h;
+  return 'https://instagram.com/'+h.replace(/^@/,'');
+}
+// Turn a Spotify or Apple Music link into an embeddable preview player.
+// Returns an <iframe> string, or '' if we can't recognize it.
+function musicEmbed(url){
+  url=String(url||'').trim(); if(!url) return '';
+  try{
+    // Spotify: open.spotify.com/{type}/{id}  ->  open.spotify.com/embed/{type}/{id}
+    let m=url.match(/open\.spotify\.com\/(intl-[a-z]+\/)?(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]+)/);
+    if(m){
+      const type=m[2], id=m[3];
+      const h = (type==='track'||type==='episode')?152:352;
+      return `<iframe class="music-embed" style="height:${h}px" src="https://open.spotify.com/embed/${type}/${id}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+    }
+    // Apple Music: music.apple.com/{country}/{type}/.../id...  ->  embed.music.apple.com/...
+    if(/music\.apple\.com\//.test(url)){
+      const embedUrl=url.replace(/music\.apple\.com/,'embed.music.apple.com');
+      const isSong=/[?&]i=\d+/.test(url) || /\/song\//.test(url);
+      const h=isSong?175:450;
+      return `<iframe class="music-embed" style="height:${h}px" src="${embedUrl}" frameborder="0" allow="autoplay *; encrypted-media *; clipboard-write" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" loading="lazy"></iframe>`;
+    }
+  }catch(e){}
+  return '';
+}
+function musicPlatform(url){
+  url=String(url||'');
+  if(/spotify\.com/.test(url)) return 'Spotify';
+  if(/music\.apple\.com/.test(url)) return 'Apple Music';
+  if(url) return 'Music';
+  return '';
+}
+function openMyBiz(){
+  const p=myPerson(); const b=(p&&p.biz)||{};
+  $('bizName').value=b.name||''; $('bizDesc').value=b.desc||''; $('bizCat').value=b.cat||'';
+  $('bizSite').value=b.site||''; $('bizIG').value=b.ig||''; $('bizOther').value=b.other||'';
+  $('bizMusic').value=b.music||'';
+  $('bizMsg').textContent='';
+  $('bizRemoveBtn').style.display=(b&&b.name)?'block':'none';
+  open_('bizModal');
+}
+function saveMyBiz(){
+  const p=myPerson(); if(!p){ return; }
+  const name=$('bizName').value.trim();
+  if(!name){ $('bizMsg').textContent='Add a business name (or tap Remove to clear it).'; return; }
+  const music=$('bizMusic').value.trim();
+  if(music && !musicEmbed(music)){ $('bizMsg').textContent='That music link isn\'t a recognized Spotify or Apple Music link. Double-check it, or leave it blank.'; return; }
+  p.biz={
+    name,
+    desc:$('bizDesc').value.trim(),
+    cat:$('bizCat').value,
+    site:normalizeUrl($('bizSite').value),
+    ig:$('bizIG').value.trim(),
+    other:normalizeUrl($('bizOther').value),
+    music:music
+  };
+  pushPerson(p); close_('bizModal'); renderBiz();
+}
+function removeMyBiz(){
+  const p=myPerson(); if(!p) return;
+  if(!confirm('Remove your business from the spotlight?')) return;
+  p.biz=null; pushPerson(p); close_('bizModal'); renderBiz();
+}
+function renderBiz(){
+  const list=$('bizList'); if(!list) return;
+  const owners=store.people.filter(p=>isApproved(p) && p.biz && p.biz.name);
+  if(!owners.length){ list.innerHTML='<div class="card"><div class="hint" style="text-align:center;padding:10px;">No businesses yet. Be the first to add yours! 💼</div></div>'; return; }
+  list.innerHTML=owners.map(p=>{
+    const b=p.biz;
+    const links=[];
+    if(b.site) links.push(`<a class="biz-link" href="${b.site}" target="_blank" rel="noopener">🌐 Website</a>`);
+    if(b.ig) links.push(`<a class="biz-link" href="${igLink(b.ig)}" target="_blank" rel="noopener">📸 Instagram</a>`);
+    if(b.other) links.push(`<a class="biz-link" href="${b.other}" target="_blank" rel="noopener">🔗 Link</a>`);
+    const isMine = me && p.name.toLowerCase()===me.toLowerCase();
+    const embed = b.music ? musicEmbed(b.music) : '';
+    const musicBlock = embed ? `<div class="biz-music"><div class="biz-music-label">🎵 ${musicPlatform(b.music)}</div>${embed}</div>` : '';
+    return `<div class="card biz-card">
+      <div class="biz-head">
+        <div class="avatar" style="width:46px;height:46px;font-size:17px;">${avatarImg(p)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="biz-name">${escapeHtml(b.name)}</div>
+          <div class="biz-owner">by ${escapeHtml(p.name)}${b.cat?' · '+escapeHtml(b.cat):''}</div>
+        </div>
+        ${isMine?`<button class="secondary sm" style="flex:none;" onclick="openMyBiz()">Edit</button>`:`<button class="msg-btn" title="Message ${escapeHtml(p.name)}" onclick="chatWith('${escapeHtml(p.name).replace(/'/g,"\\'")}')">💬</button>`}
+      </div>
+      ${b.desc?`<div class="biz-desc">${escapeHtml(b.desc)}</div>`:''}
+      ${links.length?`<div class="biz-links">${links.join('')}</div>`:''}
+      ${musicBlock}
+    </div>`;
+  }).join('');
+}
+
+function renderMyFamily(){
+  const list=$('myFamilyList'); if(!list) return;
+  const fam=myFamily();
+  if(!fam.length){ list.innerHTML='<div class="hint">No one yet. Add the people you plan with most.</div>'; return; }
+  list.innerHTML=fam.map((name,i)=>`
+    <div class="member" style="padding:10px 12px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">${avatarByName(name)}</div>
+      <div class="m-info"><div class="m-name">${escapeHtml(name)}</div></div>
+      <button class="linkbtn" style="color:var(--red)" onclick="removeFamily(${i})">Remove</button>
+    </div>`).join('');
+}
+let familyMode='type';
+function openAddFamily(mode){
+  familyMode=mode;
+  $('familyMsg').textContent='';
+  $('familyName').value='';
+  $('familyTypeBox').style.display = mode==='type'?'block':'none';
+  $('familyPickBox').style.display = mode==='pick'?'block':'none';
+  $('familyModalTitle').textContent = mode==='type'?'Add New Person':'Add From Members';
+  if(mode==='pick'){
+    const fam=myFamily();
+    const others=store.people.filter(p=> (!me || p.name.toLowerCase()!==me.toLowerCase()) && !fam.some(f=>f.toLowerCase()===p.name.toLowerCase()));
+    $('familyPickList').innerHTML = others.length
+      ? others.map(p=>`<div class="roster-item" style="cursor:pointer;" onclick="pickFamily('${escapeHtml(p.name).replace(/'/g,"\\'")}')">
+          <div class="avatar" style="width:30px;height:30px;font-size:12px;">${avatarImg(p)}</div>
+          <div class="roster-name">${escapeHtml(p.name)}</div><span class="hint">tap to add</span></div>`).join('')
+      : '<div class="hint">Everyone\'s already in your family, or no other members yet.</div>';
+    $('familyAddBtn').style.display='none';
+  } else {
+    $('familyAddBtn').style.display='block';
+  }
+  open_('familyModal');
+}
+function addToMyFamily(name){
+  const p=myPerson(); if(!p) return;
+  if(!Array.isArray(p.family)) p.family=[];
+  if(p.family.some(f=>f.toLowerCase()===name.toLowerCase())){ $('familyMsg').textContent='Already in your family.'; return false; }
+  p.family.push(name); pushPerson(p); renderMyFamily(); return true;
+}
+function pickFamily(name){ if(addToMyFamily(name)) close_('familyModal'); }
+function submitFamily(){
+  const name=$('familyName').value.trim();
+  if(!name){ $('familyMsg').textContent='Enter a name.'; return; }
+  if(addToMyFamily(name)) close_('familyModal');
+}
+function removeFamily(i){
+  const p=myPerson(); if(!p||!Array.isArray(p.family)) return;
+  p.family.splice(i,1); pushPerson(p); renderMyFamily();
+}
+
+function renderRoster(){
+  const admin=canAdmin();
+  $('addPersonBtn').style.display=admin?'inline':'none';
+  $('rosterNote').innerHTML=(admin?'You assign roles. Admins have full control; supervisors help manage; members pay their share.':'Only an admin can change roles.')+' <br><span style="color:var(--green)">🔒 Phone numbers &amp; emails are private — never shown to anyone. Reach people through in-app Messages.</span>';
+  // only show approved members in the main roster
+  const approved=store.people.map((p,gi)=>({p,gi})).filter(x=>isApproved(x.p));
+  $('roster').innerHTML=approved.map(({p,gi})=>{
+    const right=admin?`<select class="roster-select" onclick="event.stopPropagation();" onchange="setRole(${gi},this.value)">
+      <option value="member" ${p.role==='member'?'selected':''}>Member</option>
+      <option value="supervisor" ${p.role==='supervisor'?'selected':''}>Supervisor</option>
+      <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option></select>`:roleTagHtml(p.role);
+    const meTag=(me&&p.name.toLowerCase()===me.toLowerCase())?' <span class="hint">(you)</span>':'';
+    const contact = (me && p.name.toLowerCase()===me.toLowerCase() && (p.phone||p.email))
+      ? `<div class="hint" style="margin-top:1px;">Your contact on file: ${escapeHtml([p.phone,p.email].filter(Boolean).join(' · '))}</div>` : '';
+    const rmPic = (admin && p.pic) ? `<div class="hint" style="margin-top:1px;"><button class="linkbtn" style="color:var(--red)" onclick="event.stopPropagation();adminRemovePic('${escapeHtml(p.name).replace(/'/g,"\\'")}')">Remove photo</button></div>` : '';
+    const isMeRow = me && p.name.toLowerCase()===me.toLowerCase();
+    const resetPw = (admin && !isMeRow) ? `<div class="hint" style="margin-top:1px;"><button class="linkbtn" style="color:var(--gold)" onclick="event.stopPropagation();adminResetPass('${escapeHtml(p.name).replace(/'/g,"\\'")}')">Reset password</button></div>` : '';
+    const rnm=escapeHtml(p.name).replace(/'/g,"\\'");
+    const rosterTap = !isMeRow ? ` onclick="chatWith('${rnm}')" style="cursor:pointer;"` : '';
+    const rosterMsg = !isMeRow ? `<button class="msg-btn" style="width:34px;height:34px;font-size:15px;" title="Message ${escapeHtml(p.name)}" onclick="event.stopPropagation();chatWith('${rnm}')">💬</button>` : '';
+    return `<div class="roster-item"${rosterTap}><div class="avatar" style="width:32px;height:32px;font-size:13px;">${avatarImg(p)}</div>
+      <div class="roster-name">${escapeHtml(p.name)}${meTag}${contact}${rmPic}${resetPw}</div><div style="display:flex;align-items:center;gap:8px;">${rosterMsg}${right}</div></div>`;
+  }).join('');
+  renderPending();
+}
+
+function pendingList(){ return store.people.map((p,gi)=>({p,gi})).filter(x=>(x.p.status||'approved')==='pending'); }
+function renderPending(){
+  const admin=canAdmin();
+  const items=pendingList();
+  const card=$('pendingCard');
+  // only admins see the pending card; show only if there are requests
+  if(!admin || !items.length){ card.style.display='none'; $('nav-admin').classList.remove('has-badge'); return; }
+  card.style.display='block';
+  $('pendingCount').textContent=items.length;
+  $('nav-admin').classList.add('has-badge');
+  $('pendingList').innerHTML=items.map(({p,gi})=>`
+    <div class="member" style="flex-wrap:wrap;">
+      <div class="avatar">${avatarImg(p)}</div>
+      <div class="m-info">
+        <div class="m-name">${escapeHtml(p.name)} <span class="hint">@${escapeHtml(p.username||'')}</span></div>
+        <div class="m-status" style="color:var(--gold);">${p.ref?('Referred by: '+escapeHtml(p.ref)):'No referral given'}</div>
+        <div class="hint" style="margin-top:1px;">Contact: ${escapeHtml([p.phone,p.email].filter(Boolean).join(' · '))||'—'}</div>
+      </div>
+      <div style="display:flex;gap:6px;width:100%;margin-top:8px;">
+        <button class="sm full" onclick="approveUser(${gi})">✓ Approve</button>
+        <button class="secondary sm full" onclick="denyUser(${gi})">Deny</button>
+      </div>
+    </div>`).join('');
+}
+function approveUser(gi){ if(!canAdmin())return; const p=store.people[gi]; if(!p)return; p.status='approved'; pushPerson(p); render(); }
+function denyUser(gi){ if(!canAdmin())return; const p=store.people[gi]; if(!p)return; if(!confirm('Deny '+p.name+'? They won\'t be able to get in.'))return; p.status='denied'; pushPerson(p); render(); }
+
+/* ---- PUBLIC / ACCESS TOGGLE ---- */
+function renderAccess(){
+  const e=ev(); const manage=canManage();
+  $('accessBox').innerHTML = `
+    <div class="hint" style="margin-top:0;margin-bottom:10px;">
+      ${e.isPublic
+        ? "This event is <strong>PUBLIC</strong> — anyone with the link can view and join without the access code. The final split still applies to whoever's IN."
+        : "This event is <strong>PRIVATE</strong> — the group access code is required to get in."}
+    </div>
+    ${manage?`<button class="${e.isPublic?'red':'secondary'} full" onclick="togglePublic()">
+      ${e.isPublic?'Make it Private (require code)':'Make it Public (no code needed)'}</button>`
+      :'<div class="perm-note">Only admins/supervisors can change access.</div>'}`;
+}
+function togglePublic(){ if(!canManage())return; const e=ev();
+  if(!e.isPublic && !confirm("Make this event public? Anyone with the link can join without the code.")) return;
+  e.isPublic=!e.isPublic; e.ledger.push({type:'in',note:'Event set to '+(e.isPublic?'PUBLIC':'PRIVATE'),amt:0}); pushEvent(); render();
+}
+
+function switchEvent(i){ openEvent(i); }
+
+$('optCost').addEventListener('input',e=>{ if(!canManage())return; ev().cost=parseFloat(e.target.value)||0; pushEvent(); render(); });
+
+function renameEvent(){ if(!canManage())return; const n=prompt("Rename event:",ev().name); if(n&&n.trim()){ ev().name=n.trim(); pushEvent(); render(); } }
+function changeHost(){ if(!canManage())return; const h=prompt("Who's hosting / in charge?",ev().host||""); if(h!==null){ ev().host=h.trim(); pushEvent(); render(); } }
+function editDesc(){ if(!canManage())return; $('descEdit').value=ev().desc||''; open_('descModal'); }
+function saveDesc(){ if(!canManage())return; ev().desc=$('descEdit').value.trim(); pushEvent(); render(); close_('descModal'); }
+function editWhen(){ if(!canManage())return; const e=ev(); $('whenEditDate').value=e.eventDate||''; $('whenEditTime').value=e.eventTime||''; $('whenEditLoc').value=e.location||''; open_('whenModal'); }
+function saveWhen(){ if(!canManage())return; const e=ev(); e.eventDate=$('whenEditDate').value||''; e.eventTime=$('whenEditTime').value||''; e.location=$('whenEditLoc').value.trim(); pushEvent(); render(); close_('whenModal'); }
+function paymentUrl(e){
+  if(!e.payHandle) return '';
+  const h=e.payHandle.replace(/^@/,'').trim();
+  if(e.payType==='venmo'){ return 'https://venmo.com/'+encodeURIComponent(h); }
+  if(e.payType==='paypal'){ return 'https://paypal.me/'+encodeURIComponent(h); }
+  return '';
+}
+function setPay(){
+  if(!canManage())return;
+  const e=ev();
+  $('psType').value = e.payType || 'paypal';
+  $('psHandle').value = e.payHandle || '';
+  $('psMsg').textContent='';
+  // deadline reminder so the host matches their PayPal/Venmo request date to the app
+  const note=$('psDeadlineNote');
+  if(e.deadline){
+    const d=new Date(e.deadline+'T23:59:59');
+    const nice=d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    note.innerHTML=`<div style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.35);border-radius:10px;padding:12px;font-size:13px;color:#f0e6c8;line-height:1.6;">📅 <strong>Match your due date:</strong> this event is due by <strong>${nice}</strong>. When you create your PayPal or Venmo request, set the same date so everyone's reminders line up.</div>`;
+  } else {
+    note.innerHTML=`<div class="hint" style="margin:0;">💡 Tip: set a "Money Due By" date on this event so you can match it on your PayPal/Venmo request.</div>`;
+  }
+  psUpdateHelper();
+  open_('paySetupModal');
+}
+function psUpdateHelper(){
+  const type=$('psType').value;
+  if(type==='venmo'){
+    $('psHandleLabel').textContent='Venmo username (without the @)';
+    $('psHandle').placeholder='e.g. Alex-Williams-7';
+    $('psHelper').innerHTML='Don\'t have Venmo yet? <a href="https://venmo.com/" target="_blank" rel="noopener" style="color:var(--green);font-weight:600;">Open Venmo</a> to sign up or sign in, then find your username under your profile (it starts with @). Paste it above without the @.';
+  } else {
+    $('psHandleLabel').textContent='PayPal.Me name (the part after paypal.me/)';
+    $('psHandle').placeholder='e.g. alexwilliams';
+    $('psHelper').innerHTML='Don\'t have a PayPal.Me link yet? <a href="https://www.paypal.com/paypalme/" target="_blank" rel="noopener" style="color:var(--green);font-weight:600;">Create your PayPal.Me</a> (free), pick your link name, then paste just that name above. Already have one? Just type the name after paypal.me/.';
+  }
+}
+function savePaySetup(){
+  if(!canManage())return;
+  const type=$('psType').value;
+  const h=$('psHandle').value.trim().replace(/^@/,'');
+  if(!h){ $('psMsg').textContent='Enter the '+(type==='venmo'?'Venmo username':'PayPal.Me name')+'.'; return; }
+  const e=ev(); e.payType=type; e.payHandle=h; pushEvent(); render(); close_('paySetupModal');
+}
+
+function makeEventAdmin(name){
+  if(!canManage())return;
+  const e=ev();
+  if(!Array.isArray(e.eventAdmins)) e.eventAdmins=[];
+  if(!e.eventAdmins.some(n=>n.toLowerCase()===name.toLowerCase())) e.eventAdmins.push(name);
+  e.ledger.push({type:'in',note:name+' was made an event admin',amt:0});
+  pushEvent(); render();
+}
+function removeEventAdmin(name){
+  if(!canManage())return;
+  const e=ev();
+  if(!confirm('Remove '+name+' as an admin for this event?'))return;
+  if(Array.isArray(e.eventAdmins)) e.eventAdmins=e.eventAdmins.filter(n=>n.toLowerCase()!==name.toLowerCase());
+  e.ledger.push({type:'out',note:name+' was removed as event admin',amt:0});
+  pushEvent(); render();
+}
+function setRole(i,role){ if(!canAdmin())return;
+  if(store.people[i].role==="admin"&&role!=="admin"){ const a=store.people.filter(p=>p.role==="admin").length; if(a<=1){ alert("Keep at least one admin."); renderRoster(); return; } }
+  store.people[i].role=role;
+  if(me&&store.people[i].name.toLowerCase()===me.toLowerCase()){ myRole=role; $('whoami').textContent=me+" · "+myRole; }
+  pushPerson(store.people[i]); render();
+}
+
+/* ---- MESSAGING ---- */
+function buildMsgTargets(){
+  const sel=$('msgTarget');
+  const prev=sel.value;
+  const opts=[];
+  // a separate group chat per event (so they never mix)
+  opts.push('<optgroup label="Event group chats">');
+  store.events.forEach(e=>{ if(!canSeeEvent(e))return; const self=(e.id===ev().id)?' ✓':''; opts.push(`<option value="grp:${e.id}">📣 ${escapeHtml(e.name)}${self}</option>`); });
+  opts.push('</optgroup>');
+  // direct messages
+  opts.push('<optgroup label="Direct messages">');
+  store.people.forEach(p=>{ if(me&&p.name.toLowerCase()===me.toLowerCase())return; opts.push(`<option value="dm:${escapeHtml(p.name)}">💬 ${escapeHtml(p.name)}</option>`); });
+  opts.push('</optgroup>');
+  sel.innerHTML=opts.join('');
+  // keep selection if still valid, else default to the current event's group chat
+  if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+  else sel.value='grp:'+ev().id;
+}
+function dmKey(a,b){ return [a.toLowerCase(),b.toLowerCase()].sort().join('|'); }
+// jump to the Chat tab and open a private chat with this person
+function chatWith(name){
+  if(!me) return;
+  if(name.toLowerCase()===me.toLowerCase()){ return; } // can't DM yourself
+  showTab('chat');
+  buildMsgTargets();
+  const sel=$('msgTarget');
+  const val='dm:'+name;
+  // make sure the option exists, then select it
+  if(![...sel.options].some(o=>o.value===val)){
+    const opt=document.createElement('option'); opt.value=val; opt.textContent='💬 '+name; sel.appendChild(opt);
+  }
+  sel.value=val;
+  renderMessages();
+  setTimeout(()=>{ const mi=$('msgInput'); if(mi) mi.focus(); }, 100);
+}
+function renderMessages(){
+  if(!me) return;
+  const target=$('msgTarget').value;
+  let msgs;
+  if(target.startsWith('grp:')){
+    const eid=parseInt(target.slice(4),10);
+    const evt=store.events.find(x=>x.id===eid);
+    msgs=store.messages.filter(m=>m.scope==='group'&&m.event===eid);
+    $('msgNote').textContent='📣 '+(evt?evt.name:'Event')+' — everyone in this event sees these messages.';
+  } else if(target.startsWith('dm:')){
+    const who=target.slice(3); const key=dmKey(me,who); msgs=store.messages.filter(m=>m.scope==='dm'&&m.key===key);
+    $('msgNote').textContent='Private — only you and '+who+'.';
+  } else { msgs=[]; $('msgNote').textContent=''; }
+  const t=$('msgThread');
+  if(!msgs.length){ t.innerHTML='<div class="msg-empty">No messages yet. Say something 👋</div>'; return; }
+  t.innerHTML=msgs.map(m=>{
+    const mine=m.from.toLowerCase()===me.toLowerCase();
+    return `<div class="msg ${mine?'mine':'theirs'}">${mine?'':`<div class="msg-who">${escapeHtml(m.from)}</div>`}${escapeHtml(m.text)}</div>`;
+  }).join('');
+  t.scrollTop=t.scrollHeight;
+}
+function sendMsg(){
+  const text=$('msgInput').value.trim(); if(!text||!me)return;
+  const target=$('msgTarget').value;
+  let m;
+  if(target.startsWith('grp:')){ const eid=parseInt(target.slice(4),10); m={scope:'group', event:eid, from:me, text, ts:Date.now()}; }
+  else if(target.startsWith('dm:')){ const who=target.slice(3); m={scope:'dm', key:dmKey(me,who), from:me, to:who, text, ts:Date.now()}; }
+  else return;
+  store.messages.push(m); $('msgInput').value=''; pushMessage(m); renderMessages();
+}
+
+/* ---- MODALS ---- */
+function open_(id){ $(id).classList.add('show'); } function close_(id){ $(id).classList.remove('show'); }
+function openPay(){ $('payName').value=me||''; $('payAmt').value=''; $('payMsg').textContent=''; const pt=ev().payType; $('payMethod').value = pt==='venmo'?'Venmo':pt==='paypal'?'PayPal':'Venmo'; open_('payModal'); }
+function openAdd(){ $('addName').value=me||''; $('addAmt').value=''; $('addMsg').textContent=''; open_('addModal'); }
+function openSpend(){ if(!canManage())return; $('spendWhat').value=''; $('spendAmt').value=''; $('spendCode').value=''; $('spendMsg').textContent=''; open_('spendModal'); }
+function openNew(){ if(!canManage())return; $('newName').value=''; $('newDesc').value=''; $('newHost').value=me||''; $('newCost').value=''; $('newDeadline').value=''; $('newEventDate').value=''; $('newEventTime').value=''; $('newLocation').value=''; $('newFamilyOnly').checked=false; $('newHideRoster').checked=true; $('newInviteOnly').checked=false; if($('newChargeGuests'))$('newChargeGuests').checked=false; $('newMsg').textContent=''; open_('newModal'); }
+function openAddPerson(){ if(!canAdmin())return; $('personName').value=''; $('personRole').value='member'; $('personMsg').textContent=''; open_('personModal'); }
+
+function submitPay(){
+  const name=$('payName').value.trim(); const amt=parseFloat($('payAmt').value); const method=$('payMethod').value;
+  if(!name){ $('payMsg').className='err'; $('payMsg').textContent='Enter your name.'; return; }
+  if(!(amt>0)){ $('payMsg').className='err'; $('payMsg').textContent='Enter a valid amount.'; return; }
+  if(!canManage()&&me&&name.toLowerCase()!==me.toLowerCase()){ $('payMsg').className='err'; $('payMsg').textContent='You can only mark your own payment.'; return; }
+  if(isOut(name)){ $('payMsg').className='err'; $('payMsg').textContent=name+' is opted out. Opt back in first.'; return; }
+  const e=ev(); let m=e.members.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(m){ m.paid+=amt; m.method=method; } else { e.members.push({name,paid:amt,method}); }
+  e.vault+=amt; e.ledger.push({type:'in',note:name+' paid via '+method,amt});
+  pushPayment(name,amt,method); pushLedger('in',name+' paid via '+method,amt); pushEvent();
+  render(); close_('payModal');
+}
+function submitAdd(){
+  const name=$('addName').value.trim()||'Anonymous'; const amt=parseFloat($('addAmt').value);
+  if(!(amt>0)){ $('addMsg').className='err'; $('addMsg').textContent='Enter a valid amount.'; return; }
+  const e=ev(); e.vault+=amt; e.ledger.push({type:'in',note:name+' added to vault',amt});
+  pushLedger('in',name+' added to vault',amt); pushEvent(); render(); close_('addModal');
+}
+function submitSpend(){
+  if(!canManage()){ $('spendMsg').textContent='Only admins/supervisors can spend.'; return; }
+  const note=$('spendWhat').value.trim(); const amt=parseFloat($('spendAmt').value); const code=$('spendCode').value;
+  if(!note){ $('spendMsg').textContent='Say what it\'s for.'; return; }
+  if(!(amt>0)){ $('spendMsg').textContent='Enter a valid amount.'; return; }
+  if(code!==CONFIG.SPEND_CODE){ $('spendMsg').textContent='Wrong passcode. Spending blocked.'; return; }
+  const e=ev(); if(amt>e.vault){ $('spendMsg').textContent='Not enough in the vault.'; return; }
+  e.vault-=amt; e.ledger.push({type:'out',note:note+' (by '+me+')',amt});
+  pushLedger('out',note+' (by '+me+')',amt); pushEvent(); render(); close_('spendModal');
+}
+function submitNew(){
+  if(!canManage())return;
+  const name=$('newName').value.trim(); const host=$('newHost').value.trim()||me;
+  const cost=parseFloat($('newCost').value)||0; const deadline=$('newDeadline').value||"";
+  const eventDate=$('newEventDate').value||""; const eventTime=$('newEventTime').value||""; const location=$('newLocation').value.trim();
+  const desc=$('newDesc').value.trim();
+  const familyOnly=$('newFamilyOnly').checked;
+  const hideRoster=$('newHideRoster').checked;
+  const inviteOnly=$('newInviteOnly').checked;
+  if(!name){ $('newMsg').textContent='Name the event.'; return; }
+  const e={ id:store.nextId++, name, host, cost, deadline, eventDate, eventTime, location, pool:"", payType:"", payHandle:"", desc, isPublic:false, cover:"", members:[], vault:0, ledger:[], optedOut:[], familyOnly, owner:me, hideRoster, inviteOnly, joinReqs:[], eventAdmins:[], guests:{}, chargeGuests:$("newChargeGuests")?$("newChargeGuests").checked:false };
+  store.events.push(e);
+  pushNewEvent(e); buildMsgTargets(); close_('newModal'); openEvent(store.events.length-1);
+}
+function submitPerson(){
+  if(!canAdmin())return;
+  const name=$('personName').value.trim(); const role=$('personRole').value;
+  if(!name){ $('personMsg').textContent='Enter a name.'; return; }
+  if(store.people.some(p=>p.name.toLowerCase()===name.toLowerCase())){ $('personMsg').textContent='Already on the list.'; return; }
+  const p={name, username:'', role, phone:'', email:'', passHash:0, status:'approved', ref:''}; store.people.push(p); pushPerson(p); buildMsgTargets(); render(); close_('personModal');
+}
+
+document.querySelectorAll('.overlay').forEach(o=>{ o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); }); });
+
+/* ---- LIVE SYNC (no-ops in demo) ---- */
+async function initLive(){
+  try{ await loadAll(); sb.channel('kinfolks').on('postgres_changes',{event:'*',schema:'public'},()=>loadAll(true)).subscribe(); buildMsgTargets(); showApp(); }
+  catch(err){ $('loginMsg').textContent='Could not reach the database. Check your Supabase keys.'; console.error(err); }
+}
+async function loadAll(keepView){
+  const cur=store.events[store.current]?.id;
+  const [{data:events},{data:members},{data:ledger},{data:people},{data:messages},{data:optouts}]=await Promise.all([
+    sb.from('events').select('*').order('id'),
+    sb.from('members').select('*'),
+    sb.from('ledger').select('*').order('id'),
+    sb.from('people').select('*').order('name'),
+    sb.from('messages').select('*').order('id'),
+    sb.from('optouts').select('*')
+  ]);
+  if(people) store.people=people.map(p=>{ let fam=[]; try{ fam=p.family?JSON.parse(p.family):[]; }catch(e){ fam=[]; } return ({name:p.name,username:p.username||'',role:p.role,phone:p.phone||'',email:p.email||'',passHash:p.pass_hash||0,status:p.status||'approved',ref:p.referred_by||'',family:fam,pic:p.pic||'',theme:p.theme||'dark',biz:(()=>{try{return p.biz?JSON.parse(p.biz):null}catch(e){return null}})(),secQ:p.sec_q||'',secAHash:p.sec_a_hash||0}); });
+  if(messages) store.messages=messages.map(m=>({scope:m.scope,event:m.event_id,key:m.dm_key,from:m.from_name,to:m.to_name,text:m.text,ts:m.ts}));
+  if(events&&events.length){
+    store.events=events.map(ev=>({
+      id:ev.id,name:ev.name,host:ev.host||'',cost:ev.cost,deadline:ev.deadline||'',pool:ev.pool||'',payType:ev.pay_type||'',payHandle:ev.pay_handle||'',desc:ev.descr||'',eventDate:ev.event_date||'',eventTime:ev.event_time||'',location:ev.location||'',isPublic:!!ev.is_public,cover:ev.cover||'',familyOnly:!!ev.family_only,owner:ev.owner_name||'',hideRoster:!!ev.hide_roster,inviteOnly:!!ev.invite_only,joinReqs:(()=>{try{return ev.join_reqs?JSON.parse(ev.join_reqs):[]}catch(e){return[]}})(),joined:(()=>{try{return ev.joined?JSON.parse(ev.joined):[]}catch(e){return[]}})(),eventAdmins:(()=>{try{return ev.event_admins?JSON.parse(ev.event_admins):[]}catch(e){return[]}})(),vault:ev.vault||0,
+      members:(members||[]).filter(m=>m.event_id===ev.id).map(m=>({name:m.name,paid:m.paid,method:m.method||''})),
+      ledger:(ledger||[]).filter(l=>l.event_id===ev.id).map(l=>({type:l.type,note:l.note,amt:l.amt})),
+      optedOut:(optouts||[]).filter(o=>o.event_id===ev.id).map(o=>o.name)
+    }));
+    const idx=store.events.findIndex(e=>e.id===cur); store.current=keepView&&idx>=0?idx:0;
+  } else { const e=ev(); await sb.from('events').insert({name:e.name,host:e.host,cost:e.cost,deadline:null,pool:'',is_public:false,vault:0}); return loadAll(); }
+  if(me){ myRole=roleOf(me); $('whoami').textContent=me+" · "+myRole; }
+  if(keepView) render();
+  updateChatBadge();
+}
+async function pushEvent(evt){ if(!LIVE)return; const e=evt||ev();
+  await sb.from('events').update({name:e.name,host:e.host,cost:e.cost,deadline:e.deadline||null,pool:e.pool,pay_type:e.payType,pay_handle:e.payHandle,descr:e.desc,event_date:e.eventDate||null,event_time:e.eventTime||null,location:e.location||'',is_public:e.isPublic,cover:e.cover,family_only:!!e.familyOnly,owner_name:e.owner||'',hide_roster:!!e.hideRoster,invite_only:!!e.inviteOnly,join_reqs:JSON.stringify(e.joinReqs||[]),joined:JSON.stringify(e.joined||[]),event_admins:JSON.stringify(e.eventAdmins||[]),vault:e.vault}).eq('id',e.id);
+  // sync optouts
+  await sb.from('optouts').delete().eq('event_id',e.id);
+  if(e.optedOut.length) await sb.from('optouts').insert(e.optedOut.map(n=>({event_id:e.id,name:n})));
+}
+async function pushNewEvent(e){ if(!LIVE)return; const {data}=await sb.from('events').insert({name:e.name,host:e.host,cost:e.cost,deadline:e.deadline||null,pool:'',pay_type:e.payType||'',pay_handle:e.payHandle||'',descr:e.desc||'',event_date:e.eventDate||null,event_time:e.eventTime||null,location:e.location||'',is_public:false,cover:e.cover||'',family_only:!!e.familyOnly,owner_name:e.owner||'',hide_roster:!!e.hideRoster,invite_only:!!e.inviteOnly,join_reqs:JSON.stringify(e.joinReqs||[]),joined:JSON.stringify(e.joined||[]),event_admins:JSON.stringify(e.eventAdmins||[]),vault:0}).select(); if(data&&data[0]) e.id=data[0].id; }
+async function pushPayment(name,amt,method){ if(!LIVE)return; const e=ev(); const {data}=await sb.from('members').select('*').eq('event_id',e.id).ilike('name',name); if(data&&data.length){ await sb.from('members').update({paid:data[0].paid+amt,method:method||null}).eq('id',data[0].id);} else { await sb.from('members').insert({event_id:e.id,name,paid:amt,method:method||null}); } }
+async function pushLedger(type,note,amt){ if(!LIVE)return; const e=ev(); await sb.from('ledger').insert({event_id:e.id,type,note,amt}); }
+async function pushPerson(p){ if(!LIVE)return; await sb.from('people').upsert({name:p.name,username:p.username||'',role:p.role,phone:p.phone||'',email:p.email||'',pass_hash:p.passHash||0,status:p.status||'approved',referred_by:p.ref||'',family:JSON.stringify(p.family||[]),pic:p.pic||'',theme:p.theme||'dark',biz:p.biz?JSON.stringify(p.biz):null,sec_q:p.secQ||'',sec_a_hash:p.secAHash||0},{onConflict:'name'}); }
+async function pushMessage(m){ if(!LIVE)return; await sb.from('messages').insert({scope:m.scope,event_id:m.event||null,dm_key:m.key||null,from_name:m.from,to_name:m.to||null,text:m.text,ts:m.ts}); }
+
+// Boot: try to restore a remembered session; otherwise show Welcome
+async function boot(){
+  $('loginScreen').style.display='none'; $('appScreen').style.display='none'; $('waitScreen').style.display='none'; $('welcomeScreen').style.display='none';
+  const remembered = safeStore.get(REMEMBER_KEY);
+  if(LIVE){
+    // pull people first so we can match the remembered user, then decide
+    try{
+      const {data:people}=await sb.from('people').select('*').order('name');
+      if(people) store.people=people.map(p=>{ let fam=[]; try{ fam=p.family?JSON.parse(p.family):[]; }catch(e){ fam=[]; } return ({name:p.name,username:p.username||'',role:p.role,phone:p.phone||'',email:p.email||'',passHash:p.pass_hash||0,status:p.status||'approved',ref:p.referred_by||'',family:fam,pic:p.pic||'',theme:p.theme||'dark',biz:(()=>{try{return p.biz?JSON.parse(p.biz):null}catch(e){return null}})(),secQ:p.sec_q||'',secAHash:p.sec_a_hash||0}); });
+    }catch(e){}
+    if(remembered && tryAutoLogin()) return;   // enterApp -> initLive loads everything
+  } else {
+    if(remembered && tryAutoLogin()) return;   // demo: seeded users already in store
+  }
+  $('welcomeScreen').style.display='flex';
+}
+boot();
+</script>
+</body>
+</html>
